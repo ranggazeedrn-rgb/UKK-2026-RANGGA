@@ -12,8 +12,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_pelanggaran'])
     $tindakan       = mysqli_real_escape_string($koneksi, $_POST['tindakan']);
 
     if (!empty($siswa_id) && !empty($pelanggaran_id) && !empty($tanggal)) {
-        $query = "INSERT INTO t_pelanggaran_siswa (siswa_id, pelanggaran_id, tanggal, keterangan, tindakan, created_at, updated_at) 
-                  VALUES ('$siswa_id', '$pelanggaran_id', '$tanggal', '$keterangan', '$tindakan', NOW(), NOW())";
+        // Simpan kelas siswa (dari penempatan terbaru) untuk riwayat
+        $kelas_id = null;
+        $r_kelas = mysqli_query($koneksi, "SELECT kelas_id FROM t_kelas_siswa WHERE siswa_id = '$siswa_id' ORDER BY id DESC LIMIT 1");
+        if ($r_kelas && mysqli_num_rows($r_kelas) > 0) {
+            $kelas_id = mysqli_fetch_assoc($r_kelas)['kelas_id'];
+        }
+        $kelas_sql = $kelas_id !== null ? "'$kelas_id'" : "NULL";
+
+        $query = "INSERT INTO t_pelanggaran_siswa (siswa_id, kelas_id, pelanggaran_id, tanggal, keterangan, tindakan, created_at, updated_at) 
+                  VALUES ('$siswa_id', $kelas_sql, '$pelanggaran_id', '$tanggal', '$keterangan', '$tindakan', NOW(), NOW())";
         if (mysqli_query($koneksi, $query)) {
             $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data pelanggaran berhasil dicatat!'];
             header("Location: catatan_pelanggaran.php");

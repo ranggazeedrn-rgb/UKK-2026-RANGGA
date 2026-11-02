@@ -1,11 +1,22 @@
 <?php
-// dashboard.php (Unified Dashboard)
 session_start();
 include 'config/koneksi.php'; 
 include 'cek_akses.php';
 
 $current_role = $_SESSION['role'] ?? 'Admin';
 $user_name = $_SESSION['name'] ?? $_SESSION['username'] ?? 'Pengguna';
+
+// Data kelas yang diampui (jika user ditunjuk sebagai wali kelas melalui Kelola Wali Kelas)
+$wali_kelas_kelas = [];
+if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
+    $ids = implode(',', $wali_kelas_kelas_ids);
+    $q_kelas_wk = mysqli_query($koneksi, "SELECT id, nama FROM t_kelas WHERE id IN ($ids) ORDER BY nama ASC");
+    if ($q_kelas_wk) {
+        while ($k = mysqli_fetch_assoc($q_kelas_wk)) {
+            $wali_kelas_kelas[] = $k;
+        }
+    }
+}
 
 $query_siswa = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_siswa");
 $total_siswa = mysqli_fetch_assoc($query_siswa)['total'] ?? 0;
@@ -28,6 +39,24 @@ $query_recent = mysqli_query($koneksi, "
     ORDER BY ps.tanggal DESC 
     LIMIT 5
 ");
+
+// Wali kelas melihat pelanggaran terbaru dari kelas yang diampu
+if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
+    $ids = implode(',', $wali_kelas_kelas_ids);
+    $query_recent = mysqli_query($koneksi, "
+        SELECT 
+            ps.tanggal,
+            ps.poin,
+            s.nama AS nama_siswa,
+            k.nama AS nama_kelas
+        FROM t_pelanggaran_siswa ps
+        LEFT JOIN t_siswa s ON ps.siswa_id = s.id
+        LEFT JOIN t_kelas k ON ps.kelas_id = k.id
+        WHERE ps.kelas_id IN ($ids)
+        ORDER BY ps.tanggal DESC 
+        LIMIT 5
+    ");
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -46,7 +75,7 @@ $query_recent = mysqli_query($koneksi, "
             
             <div class="flex justify-between items-center mb-8">
                 <div>
-                    <h1 class="text-2xl font-bold text-black">Dashboard Utama 
+                    <h1 class="text-2xl font-bold text-black">Dashboard Utama</h1>
                     <p class="text-sm font-bold text-slate-500 mt-1">Selamat datang kembali, <?php echo htmlspecialchars($user_name); ?>!</p>
                 </div>
             </div>
@@ -77,6 +106,26 @@ $query_recent = mysqli_query($koneksi, "
                     </div>
                 </div>
             </div>
+
+            <!-- Kelas yang Diampu (Wali Kelas) -->
+            <?php if ($is_wali_kelas): ?>
+            <div class="bg-blue-50 border border-blue-200 p-6 rounded-[1.5rem] mb-8">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="fa-solid fa-user-tie text-xl text-blue-600"></i>
+                    <div>
+                        <h3 class="text-sm font-bold text-black uppercase tracking-wider">Kelas yang Anda Ampu</h3>
+                        <p class="text-xs font-bold text-slate-500">Anda ditetapkan sebagai wali kelas dari kelas berikut.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <?php foreach ($wali_kelas_kelas as $k): ?>
+                        <span class="bg-white border border-blue-200 px-4 py-2 rounded-xl text-sm font-bold text-blue-600 shadow-sm">
+                            <i class="fa-solid fa-school mr-1"></i> <?php echo htmlspecialchars($k['nama']); ?>
+                        </span>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <!-- Table -->
             <div class="bg-slate-100 p-6 rounded-[1.5rem]">

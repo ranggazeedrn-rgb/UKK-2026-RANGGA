@@ -60,7 +60,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_user'])) {
     <?php include 'layouts/sidebar.php'; ?>
 
     <div class="flex-1 flex flex-col min-w-0">
-        <?php if (file_exists('layouts/header.php')) { include 'layouts/header.php'; } ?>
 
         <main class="p-8 overflow-y-auto flex-1">
             
@@ -114,7 +113,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_user'])) {
                             <option value="">-- Pilih Role --</option>
                             <option value="Admin">Admin</option>
                             <option value="Guru">Guru</option>
-                            <option value="Wali Kelas">Wali Kelas</option>
                         </select>
                     </div>
 

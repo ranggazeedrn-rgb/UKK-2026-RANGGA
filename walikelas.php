@@ -31,12 +31,21 @@ if (isset($_GET['delete_id'])) {
     exit();
 }
 
+// Fitur Filter / Search
+$search = $_GET['search'] ?? '';
+$where = "";
+if (!empty($search)) {
+    $s = mysqli_real_escape_string($koneksi, $search);
+    $where = "WHERE g.nama LIKE '%$s%' OR k.nama LIKE '%$s%' OR ta.nama LIKE '%$s%'";
+}
+
 // Query menggunakan SELECT ta.* untuk keamanan nama kolom
 $query_data = "SELECT wk.*, g.nama as nama_guru, k.nama as nama_kelas, ta.* 
                FROM t_wali_kelas wk 
                LEFT JOIN t_guru g ON wk.guru_id = g.id 
                LEFT JOIN t_kelas k ON wk.kelas_id = k.id 
                LEFT JOIN t_tahun_ajaran ta ON wk.tahun_ajaran_id = ta.id 
+               $where
                ORDER BY wk.id DESC";
 $result = mysqli_query($koneksi, $query_data);
 
@@ -65,6 +74,18 @@ $ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DESC
                 <i class="fa-solid fa-plus"></i> Tetapkan Wali Kelas
             </button>
         </div>
+
+        <?php if (isset($_SESSION['flash'])): ?>
+            <div class="p-4 mb-6 rounded-lg text-sm font-bold <?php echo $_SESSION['flash']['type'] === 'success' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'; ?>">
+                <?php echo $_SESSION['flash']['message']; ?>
+            </div>
+            <?php unset($_SESSION['flash']); ?>
+        <?php endif; ?>
+
+        <form method="GET" class="mb-6 flex gap-2">
+            <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Cari Nama Guru, Kelas, atau Tahun Ajaran..." class="px-4 py-2 border border-slate-300 rounded-lg text-sm w-80 focus:outline-none focus:border-blue-600">
+            <button type="submit" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-lg text-sm font-bold">Cari</button>
+        </form>
 
         <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-200">
             <h3 class="text-sm font-bold text-black mb-4">Daftar Wali Kelas</h3>

@@ -839,7 +839,7 @@ CREATE TABLE `t_users` (
 INSERT INTO `t_users` (`id`, `name`, `email`, `email_verified_at`, `password`, `remember_token`, `role`, `created_at`, `updated_at`) VALUES
 (1, 'Administrator', 'admin@ukk2026.com', '2026-10-02 01:48:51', '$2y$10$RS53mKxMjN8wP7lPw1ZSn.4ef06mI0yzBHBRvUyBJzUpM4830o.Au', '', 'Admin', '2026-10-02 01:48:51', '2026-10-02 01:48:51'),
 (2, 'Bapak Guru', 'guru@ukk2026.com', '2026-10-02 01:57:34', '$2y$10$GHyInVTPyZNxGFAWxrCvQe3b1nI.0jkzVWd.Zcg4waGWGjx06qsZS', '', 'Guru', '2026-10-02 01:57:34', '2026-10-02 01:57:34'),
-(3, 'Ibu Wali Kelas', 'walikelas@ukk2026.com', '2026-10-02 01:57:34', '$2y$10$UuGg3CXnKYPiX0zEPXaxJOnan8OSv9p9Pv5xfOdOu7efAlAvy/Jxa', '', 'Wali Kelas', '2026-10-02 01:57:34', '2026-10-02 01:57:34'),
+(3, 'Ibu Wali Kelas', 'walikelas@ukk2026.com', '2026-10-02 01:57:34', '$2y$10$UuGg3CXnKYPiX0zEPXaxJOnan8OSv9p9Pv5xfOdOu7efAlAvy/Jxa', '', 'Guru', '2026-10-02 01:57:34', '2026-10-02 01:57:34'),
 (4, 'nonok', 'nonok1@gmail.com', '2026-10-02 03:25:49', 'guru123', '', 'guru', '2026-10-02 03:25:49', '2026-10-02 03:25:49'),
 (101, 'Drs. H. Ahmad Dahlan, M.Pd.', 'ahmad.dahlan@sekolah.sch.id', '2026-10-02 03:46:27', 'guru123', '', 'guru', '2026-10-02 03:46:27', '2026-10-02 03:46:27'),
 (102, 'Dra. Hj. Siti Nurjanah, M.M.', 'siti.nurjanah@sekolah.sch.id', '2026-10-02 03:46:27', 'guru123', '', 'guru', '2026-10-02 03:46:27', '2026-10-02 03:46:27'),

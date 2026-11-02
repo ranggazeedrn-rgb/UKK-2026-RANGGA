@@ -4,22 +4,39 @@ include 'config/koneksi.php';
 include 'cek_akses.php';
 
 // Kueri presisi mengambil riwayat pelanggaran, siswa, kelas, dan poin pelanggaran
+// nama_kelas: utamakan kelas saat pelanggaran (ps.kelas_id), fallback ke penempatan t_kelas_siswa
 $query = "SELECT ps.*, 
                  s.nama AS nama_siswa, s.nis,
                  p.nama AS nama_pelanggaran, p.poin,
-                 (SELECT k.nama 
-                  FROM t_kelas_siswa ks 
-                  JOIN t_kelas k ON ks.kelas_id = k.id 
-                  WHERE ks.siswa_id = ps.siswa_id 
-                  ORDER BY ks.id DESC LIMIT 1) AS nama_kelas
+                 ka.nama AS nama_kelas
           FROM t_pelanggaran_siswa ps
           LEFT JOIN t_siswa s ON ps.siswa_id = s.id
           LEFT JOIN t_pelanggaran p ON ps.pelanggaran_id = p.id
+          LEFT JOIN t_kelas ka ON ps.kelas_id = ka.id
           ORDER BY ps.tanggal DESC, ps.id DESC";
 
 $result = @mysqli_query($koneksi, $query);
-?>
-<!DOCTYPE html>
+
+// Fallback: baris lama tanpa kelas_id diisi dari penempatan siswa terbaru
+if ($result) {
+    while ($row = mysqli_fetch_assoc($result)) {
+        if (empty($row['nama_kelas']) && !empty($row['siswa_id'])) {
+            $sd = (int)$row['siswa_id'];
+            $q_k = "SELECT k.nama FROM t_kelas_siswa ks
+                    JOIN t_kelas k ON ks.kelas_id = k.id
+                    WHERE ks.siswa_id = '$sd'
+                    ORDER BY ks.id DESC LIMIT 1";
+            $r_k = mysqli_query($koneksi, $q_k);
+            if ($r_k && mysqli_num_rows($r_k) > 0) {
+                $row['nama_kelas'] = mysqli_fetch_assoc($r_k)['nama'];
+            }
+        }
+        $rows[] = $row;
+    }
+} else {
+    $rows = [];
+}
+?><!DOCTYPE html>
 <html lang="id">
 <head>
     <title>Riwayat Pelanggaran - Sistem Kedisiplinan</title>
@@ -57,8 +74,8 @@ $result = @mysqli_query($koneksi, $query);
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
-                        <?php if ($result && mysqli_num_rows($result) > 0): ?>
-                            <?php while ($row = mysqli_fetch_assoc($result)): 
+                        <?php if (count($rows) > 0): ?>
+                            <?php foreach ($rows as $row): 
                                 $nama_siswa = !empty($row['nama_siswa']) ? $row['nama_siswa'] : 'Siswa Tidak Ditemukan';
                                 $nama_kelas = !empty($row['nama_kelas']) ? $row['nama_kelas'] : '-';
                                 $nama_pelanggaran = !empty($row['nama_pelanggaran']) ? $row['nama_pelanggaran'] : 'Jenis Pelanggaran Tidak Ada';
@@ -87,7 +104,7 @@ $result = @mysqli_query($koneksi, $query);
                                         <div class="text-xs text-slate-400 font-medium italic mt-0.5"><?php echo htmlspecialchars($row['keterangan'] ?? '-'); ?></div>
                                     </td>
                                 </tr>
-                            <?php endwhile; ?>
+                            <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
                                 <td colspan="6" class="py-8 text-center text-slate-500 font-bold">Belum ada riwayat pelanggaran yang dicatat.</td>

@@ -1,7 +1,6 @@
 <?php
 session_start();
-// include 'config/koneksi.php';
-// include 'cek_akses.php';
+include 'cek_akses.php';
 ?>
 <!DOCTYPE html>
 <html lang="id">
