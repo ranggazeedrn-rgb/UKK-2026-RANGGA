@@ -15,6 +15,7 @@ $query = "SELECT ps.*,
           LEFT JOIN t_kelas ka ON ps.kelas_id = ka.id
           ORDER BY ps.tanggal DESC, ps.id DESC";
 
+$rows = [];
 $result = @mysqli_query($koneksi, $query);
 
 // Fallback: baris lama tanpa kelas_id diisi dari penempatan siswa terbaru
@@ -74,7 +75,7 @@ if ($result) {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
-                        <?php if (count($rows) > 0): ?>
+                        <?php if (!empty($rows)): ?>
                             <?php foreach ($rows as $row): 
                                 $nama_siswa = !empty($row['nama_siswa']) ? $row['nama_siswa'] : 'Siswa Tidak Ditemukan';
                                 $nama_kelas = !empty($row['nama_kelas']) ? $row['nama_kelas'] : '-';
