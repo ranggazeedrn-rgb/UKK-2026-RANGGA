@@ -1066,7 +1066,7 @@ ALTER TABLE `t_guru`
 -- Constraints for table `t_kelas_siswa`
 --
 ALTER TABLE `t_kelas_siswa`
-  ADD CONSTRAINT `t_kelas_siswa_ibfk_1` FOREIGN KEY (`id`) REFERENCES `t_siswa` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `t_kelas_siswa_ibfk_1` FOREIGN KEY (`siswa_id`) REFERENCES `t_siswa` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `t_kelas_siswa_ibfk_2` FOREIGN KEY (`tahun_ajaran_id`) REFERENCES `t_tahun_ajaran` (`id`) ON DELETE CASCADE;
 
 --

@@ -11,9 +11,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $siswa_id = mysqli_real_escape_string($koneksi, $_POST['siswa_id']);
 
     if ($action === 'create') {
-        $query = "INSERT INTO t_kelas_siswa (tahun_ajaran_id, kelas_id, siswa_id, status_aktif, created_at, updated_at) 
-                  VALUES ('$tahun_ajaran_id', '$kelas_id', '$siswa_id', 1, NOW(), NOW())";
-        mysqli_query($koneksi, $query);
+        // tanggal_mulai/tanggal_selesai wajib (NOT NULL), ambil dari periode tahun ajaran
+        $tanggal_mulai = $tanggal_selesai = date('Y-m-d');
+        if ($res_ta = mysqli_query($koneksi, "SELECT tanggal_mulai, tanggal_selesai FROM t_tahun_ajaran WHERE id = '$tahun_ajaran_id'")) {
+            if ($ta = mysqli_fetch_assoc($res_ta)) {
+                $tanggal_mulai = $ta['tanggal_mulai'];
+                $tanggal_selesai = $ta['tanggal_selesai'];
+            }
+        }
+        $query = "INSERT INTO t_kelas_siswa (tahun_ajaran_id, kelas_id, siswa_id, tanggal_mulai, tanggal_selesai, status_aktif) 
+                  VALUES ('$tahun_ajaran_id', '$kelas_id', '$siswa_id', '$tanggal_mulai', '$tanggal_selesai', 1)";
+        mysqli_query($koneksi, $query) or die("Gagal menyimpan penempatan: " . mysqli_error($koneksi));
     }
     header("Location: penempatan_siswa.php?tahun_ajaran_id=$tahun_ajaran_id&kelas_id=$kelas_id");
     exit();
@@ -28,8 +36,8 @@ if (isset($_GET['delete_id'])) {
     exit();
 }
 
-$selected_ta = $_GET['tahun_ajaran_id'] ?? '';
-$selected_kelas = $_GET['kelas_id'] ?? '';
+$selected_ta = (int)($_GET['tahun_ajaran_id'] ?? 0);
+$selected_kelas = (int)($_GET['kelas_id'] ?? 0);
 
 // Fetch filters secara aman
 $ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DESC");

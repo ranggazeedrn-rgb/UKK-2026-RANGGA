@@ -27,6 +27,12 @@ $total_guru = mysqli_fetch_assoc($query_guru)['total'] ?? 0;
 $query_pelanggaran = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa");
 $total_pelanggaran = mysqli_fetch_assoc($query_pelanggaran)['total'] ?? 0;
 
+$query_kelas = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_kelas");
+$total_kelas = mysqli_fetch_assoc($query_kelas)['total'] ?? 0;
+
+$query_ta_aktif = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_tahun_ajaran WHERE status_aktif = 1");
+$total_ta_aktif = mysqli_fetch_assoc($query_ta_aktif)['total'] ?? 0;
+
 $query_recent = mysqli_query($koneksi, "
     SELECT 
         ps.tanggal,
@@ -81,7 +87,7 @@ if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
             </div>
 
             <!-- Stats Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="bg-slate-100 p-6 rounded-2xl flex items-center gap-4">
                     <i class="fa-solid fa-user text-4xl text-blue-600"></i>
                     <div>
@@ -89,7 +95,7 @@ if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
                         <p class="text-2xl font-bold text-blue-600"><?php echo $total_siswa; ?></p>
                     </div>
                 </div>
-                
+
                 <div class="bg-slate-100 p-6 rounded-2xl flex items-center gap-4">
                     <i class="fa-solid fa-list-check text-4xl text-blue-600"></i>
                     <div>
@@ -103,6 +109,33 @@ if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
                     <div>
                         <h3 class="text-sm font-bold text-black uppercase tracking-wider">Pelanggaran</h3>
                         <p class="text-2xl font-bold text-blue-600"><?php echo $total_pelanggaran; ?></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid Tambahan -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-slate-100 p-6 rounded-2xl flex items-center gap-4">
+                    <i class="fa-solid fa-user-tie text-4xl text-blue-600"></i>
+                    <div>
+                        <h3 class="text-sm font-bold text-black uppercase tracking-wider">Guru</h3>
+                        <p class="text-2xl font-bold text-blue-600"><?php echo $total_guru; ?></p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 p-6 rounded-2xl flex items-center gap-4">
+                    <i class="fa-solid fa-school text-4xl text-blue-600"></i>
+                    <div>
+                        <h3 class="text-sm font-bold text-black uppercase tracking-wider">Kelas</h3>
+                        <p class="text-2xl font-bold text-blue-600"><?php echo $total_kelas; ?></p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 p-6 rounded-2xl flex items-center gap-4">
+                    <i class="fa-solid fa-calendar-days text-4xl text-blue-600"></i>
+                    <div>
+                        <h3 class="text-sm font-bold text-black uppercase tracking-wider">Tahun Ajaran Aktif</h3>
+                        <p class="text-2xl font-bold text-blue-600"><?php echo $total_ta_aktif; ?></p>
                     </div>
                 </div>
             </div>
