@@ -19,9 +19,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $tanggal_selesai = $ta['tanggal_selesai'];
             }
         }
-        $query = "INSERT INTO t_kelas_siswa (tahun_ajaran_id, kelas_id, siswa_id, tanggal_mulai, tanggal_selesai, status_aktif) 
+        $query = "INSERT INTO t_kelas_siswa (tahun_ajaran_id, kelas_id, siswa_id, tanggal_mulai, tanggal_selesai, status_aktif)
                   VALUES ('$tahun_ajaran_id', '$kelas_id', '$siswa_id', '$tanggal_mulai', '$tanggal_selesai', 1)";
-        mysqli_query($koneksi, $query) or die("Gagal menyimpan penempatan: " . mysqli_error($koneksi));
+        try {
+            if (mysqli_query($koneksi, $query) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+            }
+        } catch (mysqli_sql_exception $e) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
+                ? 'Gagal: siswa sudah punya kelas pada tahun ajaran ini!'
+                : 'Gagal menyimpan penempatan: ' . $e->getMessage()];
+        }
     }
     header("Location: penempatan_siswa.php?tahun_ajaran_id=$tahun_ajaran_id&kelas_id=$kelas_id");
     exit();
@@ -40,15 +48,21 @@ $selected_ta = (int)($_GET['tahun_ajaran_id'] ?? 0);
 $selected_kelas = (int)($_GET['kelas_id'] ?? 0);
 
 // Fetch filters secara aman
-$ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DESC");
+$ta_list = tahun_ajaran_pilihan($koneksi);
 $kelas_list = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
 $siswa_unallocated = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY nama ASC");
 
+// Opsi kelas dipakai di filter dan modal tambah
+$kelas_options = '';
+while ($k = mysqli_fetch_assoc($kelas_list)) {
+    $kelas_options .= '<option value="' . $k['id'] . '"' . ($selected_kelas == $k['id'] ? ' selected' : '') . '>' . htmlspecialchars($k['nama']) . '</option>';
+}
+
 $siswa_in_kelas = null;
 if ($selected_ta && $selected_kelas) {
-    $query_siswa = "SELECT ks.id as ks_id, s.nis, s.nama, s.jenis_kelamin 
-                    FROM t_kelas_siswa ks 
-                    JOIN t_siswa s ON ks.siswa_id = s.id 
+    $query_siswa = "SELECT ks.id as ks_id, s.nis, s.nama, s.jenis_kelamin
+                    FROM t_kelas_siswa ks
+                    JOIN t_siswa s ON ks.siswa_id = s.id
                     WHERE ks.tahun_ajaran_id = '$selected_ta' AND ks.kelas_id = '$selected_kelas'
                     ORDER BY s.nama ASC";
     $siswa_in_kelas = mysqli_query($koneksi, $query_siswa);
@@ -61,7 +75,7 @@ if ($selected_ta && $selected_kelas) {
     <?php include 'layouts/head.php'; ?>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex">
-    
+
     <?php include 'layouts/sidebar.php'; ?>
 
     <main class="flex-1 p-8 bg-slate-50 overflow-y-auto">
@@ -70,12 +84,18 @@ if ($selected_ta && $selected_kelas) {
                 <h1 class="text-2xl font-bold text-black">Penempatan Siswa (Plotting)</h1>
                 <p class="text-sm font-bold text-slate-500 mt-1">Atur penempatan siswa ke dalam kelas berdasarkan Tahun Ajaran.</p>
             </div>
-            <?php if ($selected_ta && $selected_kelas): ?>
+            <?php if ($selected_ta): ?>
                 <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
                     <i class="fa-solid fa-plus"></i> Tambah Siswa ke Kelas
                 </button>
             <?php endif; ?>
         </div>
+
+        <?php if (isset($_SESSION['flash'])): ?>
+            <div class="p-4 mb-6 rounded-lg text-sm font-bold <?php echo $_SESSION['flash']['type'] === 'success' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'; ?>">
+                <?php echo $_SESSION['flash']['message']; unset($_SESSION['flash']); ?>
+            </div>
+        <?php endif; ?>
 
         <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-200 mb-6">
             <form method="GET" class="flex flex-wrap gap-4 items-end">
@@ -83,18 +103,18 @@ if ($selected_ta && $selected_kelas) {
                     <label class="block text-xs font-bold text-slate-700 mb-2">Tahun Ajaran</label>
                     <select name="tahun_ajaran_id" required class="w-56 border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
                         <option value="">-- Pilih Tahun Ajaran --</option>
-                        <?php 
+                        <?php
                         if ($ta_list) {
                             mysqli_data_seek($ta_list, 0);
-                            while ($ta = mysqli_fetch_assoc($ta_list)): 
+                            while ($ta = mysqli_fetch_assoc($ta_list)):
                                 $t_name = $ta['tahun_ajaran'] ?? $ta['nama'] ?? $ta['tahun'] ?? '-';
                                 $t_sem = isset($ta['semester']) ? ucfirst($ta['semester']) : 'Ganjil';
                             ?>
                                 <option value="<?php echo $ta['id']; ?>" <?php echo $selected_ta == $ta['id'] ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($t_name); ?> (<?php echo htmlspecialchars($t_sem); ?>)
                                 </option>
-                            <?php 
-                            endwhile; 
+                            <?php
+                            endwhile;
                         }
                         ?>
                     </select>
@@ -103,18 +123,7 @@ if ($selected_ta && $selected_kelas) {
                     <label class="block text-xs font-bold text-slate-700 mb-2">Kelas</label>
                     <select name="kelas_id" required class="w-56 border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
                         <option value="">-- Pilih Kelas --</option>
-                        <?php 
-                        if ($kelas_list) {
-                            mysqli_data_seek($kelas_list, 0);
-                            while ($k = mysqli_fetch_assoc($kelas_list)): 
-                            ?>
-                                <option value="<?php echo $k['id']; ?>" <?php echo $selected_kelas == $k['id'] ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($k['nama']); ?>
-                                </option>
-                            <?php 
-                            endwhile; 
-                        }
-                        ?>
+                        <?php echo $kelas_options; ?>
                     </select>
                 </div>
                 <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-sm transition">
@@ -165,8 +174,15 @@ if ($selected_ta && $selected_kelas) {
             <form method="POST" action="penempatan_siswa.php">
                 <input type="hidden" name="action" value="create">
                 <input type="hidden" name="tahun_ajaran_id" value="<?php echo htmlspecialchars($selected_ta); ?>">
-                <input type="hidden" name="kelas_id" value="<?php echo htmlspecialchars($selected_kelas); ?>">
-                
+
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-700 mb-2">PILIH KELAS *</label>
+                    <select name="kelas_id" required class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
+                        <option value="">-- Pilih Kelas --</option>
+                        <?php echo $kelas_options; ?>
+                    </select>
+                </div>
+
                 <div class="mb-6">
                     <label class="block text-xs font-bold text-slate-700 mb-2">PILIH SISWA *</label>
                     <select name="siswa_id" required class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">

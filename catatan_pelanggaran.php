@@ -12,23 +12,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_pelanggaran'])
     $tindakan       = mysqli_real_escape_string($koneksi, $_POST['tindakan']);
 
     if (!empty($siswa_id) && !empty($pelanggaran_id) && !empty($tanggal)) {
-        // Simpan kelas siswa (dari penempatan terbaru) untuk riwayat
-        $kelas_id = null;
-        $r_kelas = mysqli_query($koneksi, "SELECT kelas_id FROM t_kelas_siswa WHERE siswa_id = '$siswa_id' ORDER BY id DESC LIMIT 1");
-        if ($r_kelas && mysqli_num_rows($r_kelas) > 0) {
-            $kelas_id = mysqli_fetch_assoc($r_kelas)['kelas_id'];
-        }
-        $kelas_sql = $kelas_id !== null ? "'$kelas_id'" : "NULL";
+        // Simpan nama siswa, kelas terbaru, dan poin agar catatan langsung tampil lengkap
+        $info = mysqli_fetch_assoc(mysqli_query($koneksi, "
+            SELECT s.nama AS nama_siswa, p.poin, ks.kelas_id, k.nama AS nama_kelas
+            FROM t_siswa s
+            CROSS JOIN t_pelanggaran p
+            LEFT JOIN t_kelas_siswa ks ON ks.siswa_id = s.id
+            LEFT JOIN t_kelas k ON ks.kelas_id = k.id
+            WHERE s.id = '$siswa_id' AND p.id = '$pelanggaran_id'
+            ORDER BY ks.id DESC
+            LIMIT 1
+        ")) ?: [];
 
-        $query = "INSERT INTO t_pelanggaran_siswa (siswa_id, kelas_id, pelanggaran_id, tanggal, keterangan, tindakan, created_at, updated_at) 
-                  VALUES ('$siswa_id', $kelas_sql, '$pelanggaran_id', '$tanggal', '$keterangan', '$tindakan', NOW(), NOW())";
+        $nama_siswa = mysqli_real_escape_string($koneksi, $info['nama_siswa'] ?? '');
+        $nama_kelas = mysqli_real_escape_string($koneksi, $info['nama_kelas'] ?? '');
+        $poin       = (int)($info['poin'] ?? 0);
+        $kelas_sql  = !empty($info['kelas_id']) ? "'" . (int)$info['kelas_id'] . "'" : "NULL";
+
+        $query = "INSERT INTO t_pelanggaran_siswa (siswa_id, nama_siswa, kelas_id, nama_kelas, pelanggaran_id, tanggal, keterangan, tindakan, poin, created_at, updated_at)
+                  VALUES ('$siswa_id', '$nama_siswa', $kelas_sql, '$nama_kelas', '$pelanggaran_id', '$tanggal', '$keterangan', '$tindakan', '$poin', NOW(), NOW())";
         if (mysqli_query($koneksi, $query)) {
             $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data pelanggaran berhasil dicatat!'];
             header("Location: catatan_pelanggaran.php");
             exit();
-        } else {
-            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal menyimpan: ' . mysqli_error($koneksi)];
         }
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal menyimpan: ' . mysqli_error($koneksi)];
     } else {
         $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Harap isi semua kolom wajib (*)'];
     }
@@ -44,7 +52,7 @@ $pelanggaran_list = @mysqli_query($koneksi, "SELECT * FROM t_pelanggaran WHERE s
 // Kueri Pengambilan Data Siswa Presisi
 if (!empty($selected_kelas)) {
     // Memakai kelas_id & siswa_id sesuai struktur schema t_kelas_siswa
-    $query_siswa = "SELECT s.*, k.nama AS nama_kelas 
+    $query_siswa = "SELECT s.*, k.nama AS nama_kelas
                     FROM t_siswa s
                     INNER JOIN t_kelas_siswa ks ON s.id = ks.siswa_id
                     INNER JOIN t_kelas k ON ks.kelas_id = k.id
@@ -52,9 +60,9 @@ if (!empty($selected_kelas)) {
                     ORDER BY s.nama ASC";
 } else {
     // Menampilkan seluruh siswa jika filter kelas tidak dipilih
-    $query_siswa = "SELECT s.*, 
+    $query_siswa = "SELECT s.*,
                     (SELECT k2.nama FROM t_kelas_siswa ks2 JOIN t_kelas k2 ON ks2.kelas_id = k2.id WHERE ks2.siswa_id = s.id ORDER BY ks2.id DESC LIMIT 1) AS nama_kelas
-                    FROM t_siswa s 
+                    FROM t_siswa s
                     ORDER BY s.nama ASC";
 }
 
@@ -72,11 +80,11 @@ if (!$siswa_list || mysqli_num_rows($siswa_list) == 0) {
     <?php include 'layouts/head.php'; ?>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex">
-    
+
     <?php include 'layouts/sidebar.php'; ?>
 
     <main class="flex-1 p-8 bg-slate-50 overflow-y-auto">
-        
+
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 max-w-2xl mx-auto">
             <div>
@@ -99,7 +107,7 @@ if (!$siswa_list || mysqli_num_rows($siswa_list) == 0) {
         <div class="max-w-2xl mx-auto bg-white p-8 rounded-[1.5rem] shadow-sm border border-slate-200">
             <form method="POST" action="catatan_pelanggaran.php">
                 <input type="hidden" name="simpan_pelanggaran" value="1">
-                
+
                 <!-- Tanggal Kejadian -->
                 <div class="mb-5">
                     <label class="block text-xs font-bold text-slate-700 mb-2">Tanggal Kejadian *</label>
@@ -125,7 +133,7 @@ if (!$siswa_list || mysqli_num_rows($siswa_list) == 0) {
                     <select name="siswa_id" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                         <option value="">-- Pilih Siswa --</option>
                         <?php if ($siswa_list && mysqli_num_rows($siswa_list) > 0): ?>
-                            <?php while ($s = mysqli_fetch_assoc($siswa_list)): 
+                            <?php while ($s = mysqli_fetch_assoc($siswa_list)):
                                 $nis = $s['nis'] ?? $s['nisn'] ?? '-';
                                 $nama = $s['nama'] ?? 'Siswa Tanpa Nama';
                                 $kelas_info = !empty($s['nama_kelas']) ? " ({$s['nama_kelas']})" : "";

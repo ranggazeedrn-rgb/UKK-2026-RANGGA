@@ -5,7 +5,7 @@ include 'cek_akses.php';
 
 // Ambil daftar Tahun Ajaran
 $tahun_ajaran_list = false;
-try { $tahun_ajaran_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DESC"); } catch (Exception $e) {}
+try { $tahun_ajaran_list = tahun_ajaran_pilihan($koneksi); } catch (Exception $e) {}
 
 // Cek kolom tahun_ajaran_id
 $has_tahun_ajaran = false;
@@ -23,10 +23,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         if ($has_tahun_ajaran && !empty($tahun_ajaran_id)) {
-            $query = "INSERT INTO t_kelas (nama, tingkat, jurusan, tahun_ajaran_id, status_aktif, created_at, updated_at) 
+            $query = "INSERT INTO t_kelas (nama, tingkat, jurusan, tahun_ajaran_id, status_aktif, created_at, updated_at)
                       VALUES ('$nama', '$tingkat', '$jurusan', '$tahun_ajaran_id', '$status_aktif', NOW(), NOW())";
         } else {
-            $query = "INSERT INTO t_kelas (nama, tingkat, jurusan, status_aktif, created_at, updated_at) 
+            $query = "INSERT INTO t_kelas (nama, tingkat, jurusan, status_aktif, created_at, updated_at)
                       VALUES ('$nama', '$tingkat', '$jurusan', '$status_aktif', NOW(), NOW())";
         }
         mysqli_query($koneksi, $query);
@@ -34,7 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: kelola_kelas.php");
         exit();
     } catch (Exception $e) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal menyimpan: ' . $e->getMessage()];
+        // mysqli menyimpan error query terakhir; query sukses berikutnya mencegah error itu terlempar lagi saat fetch
+        mysqli_query($koneksi, 'SELECT 1');
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
+            ? 'Gagal menyimpan: nama kelas sudah dipakai!'
+            : 'Gagal menyimpan: ' . $e->getMessage()];
     }
 }
 ?>
@@ -69,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-xs font-bold text-slate-700 mb-2">NAMA KELAS * (Contoh: X RPL 1)</label>
                     <input type="text" name="nama" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                 </div>
-                
+
                 <div class="grid grid-cols-2 gap-6 mb-5">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">TINGKAT *</label>
@@ -89,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-xs font-bold text-slate-700 mb-2">TAHUN AJARAN</label>
                     <select name="tahun_ajaran_id" class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                         <option value="">-- Pilih Tahun Ajaran --</option>
-                        <?php 
+                        <?php
                         if ($tahun_ajaran_list && mysqli_num_rows($tahun_ajaran_list) > 0) {
                             mysqli_data_seek($tahun_ajaran_list, 0);
                             while ($ta = mysqli_fetch_assoc($tahun_ajaran_list)) {
@@ -105,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="checkbox" name="status_aktif" value="1" checked class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500">
                     <label class="text-sm font-bold text-slate-700">Set Kelas Aktif</label>
                 </div>
-                
+
                 <div class="pt-4 border-t border-slate-100">
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-sm shadow-md transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-save"></i> Simpan Data Kelas

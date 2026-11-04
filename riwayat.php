@@ -5,7 +5,7 @@ include 'cek_akses.php';
 
 // Kueri presisi mengambil riwayat pelanggaran, siswa, kelas, dan poin pelanggaran
 // nama_kelas: utamakan kelas saat pelanggaran (ps.kelas_id), fallback ke penempatan t_kelas_siswa
-$query = "SELECT ps.*, 
+$query = "SELECT ps.*,
                  s.nama AS nama_siswa, s.nis,
                  p.nama AS nama_pelanggaran, p.poin,
                  ka.nama AS nama_kelas
@@ -44,11 +44,11 @@ if ($result) {
     <?php include 'layouts/head.php'; ?>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex">
-    
+
     <?php include 'layouts/sidebar.php'; ?>
 
     <main class="flex-1 p-8 bg-slate-50 overflow-y-auto">
-        
+
         <!-- Header -->
         <div class="flex justify-between items-center mb-8">
             <div>
@@ -76,7 +76,7 @@ if ($result) {
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
                         <?php if (!empty($rows)): ?>
-                            <?php foreach ($rows as $row): 
+                            <?php foreach ($rows as $row):
                                 $nama_siswa = !empty($row['nama_siswa']) ? $row['nama_siswa'] : 'Siswa Tidak Ditemukan';
                                 $nama_kelas = !empty($row['nama_kelas']) ? $row['nama_kelas'] : '-';
                                 $nama_pelanggaran = !empty($row['nama_pelanggaran']) ? $row['nama_pelanggaran'] : 'Jenis Pelanggaran Tidak Ada';

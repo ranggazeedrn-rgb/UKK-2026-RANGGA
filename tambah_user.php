@@ -31,19 +31,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_user'])) {
         } else {
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             $sql_email = !empty($email) ? "'$email'" : "NULL";
-            $remember_token = ''; 
+            $remember_token = '';
 
-            $query = "INSERT INTO t_users (name, email, password, remember_token, role, created_at, updated_at) 
+            $query = "INSERT INTO t_users (name, email, password, remember_token, role, created_at, updated_at)
                       VALUES ('$name', $sql_email, '$hashed_password', '$remember_token', '$role_input', NOW(), NOW())";
-            
-            $simpan = @mysqli_query($koneksi, $query);
 
-            if ($simpan) {
+            try {
+                if (mysqli_query($koneksi, $query) === false) {
+                    throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+                }
                 $_SESSION['flash'] = ['type' => 'success', 'message' => 'User baru berhasil ditambahkan!'];
                 header("Location: dashboard.php");
                 exit();
-            } else {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal menyimpan user: ' . mysqli_error($koneksi)];
+            } catch (mysqli_sql_exception $e) {
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
+                    ? 'Email sudah dipakai user lain!'
+                    : 'Gagal menyimpan user: ' . $e->getMessage()];
             }
         }
     }
@@ -56,13 +59,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_user'])) {
     <?php include 'layouts/head.php'; ?>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex">
-    
+
     <?php include 'layouts/sidebar.php'; ?>
 
     <div class="flex-1 flex flex-col min-w-0">
 
         <main class="p-8 overflow-y-auto flex-1">
-            
+
             <div class="flex justify-between items-center mb-8 max-w-4xl mx-auto">
                 <div>
                     <h1 class="text-2xl font-bold text-black">Tambah User Baru</h1>

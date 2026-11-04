@@ -12,13 +12,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $guru_id = mysqli_real_escape_string($koneksi, $_POST['guru_id']);
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
 
-    if ($action === 'create') {
-        $query = "INSERT INTO t_wali_kelas (tahun_ajaran_id, kelas_id, guru_id, status_aktif, created_at, updated_at) 
-                  VALUES ('$tahun_ajaran_id', '$kelas_id', '$guru_id', '$status_aktif', NOW(), NOW())";
-        mysqli_query($koneksi, $query);
-    } elseif ($action === 'update' && $id) {
-        $query = "UPDATE t_wali_kelas SET tahun_ajaran_id='$tahun_ajaran_id', kelas_id='$kelas_id', guru_id='$guru_id', status_aktif='$status_aktif', updated_at=NOW() WHERE id='$id'";
-        mysqli_query($koneksi, $query);
+    try {
+        if ($action === 'create') {
+            $query = "INSERT INTO t_wali_kelas (tahun_ajaran_id, kelas_id, guru_id, status_aktif, created_at, updated_at)
+                      VALUES ('$tahun_ajaran_id', '$kelas_id', '$guru_id', '$status_aktif', NOW(), NOW())";
+            if (mysqli_query($koneksi, $query) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+            }
+        } elseif ($action === 'update' && $id) {
+            $query = "UPDATE t_wali_kelas SET tahun_ajaran_id='$tahun_ajaran_id', kelas_id='$kelas_id', guru_id='$guru_id', status_aktif='$status_aktif', updated_at=NOW() WHERE id='$id'";
+            if (mysqli_query($koneksi, $query) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+            }
+        }
+    } catch (mysqli_sql_exception $e) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
+            ? 'Gagal: kelas ini sudah punya wali kelas pada tahun ajaran tersebut!'
+            : 'Gagal menyimpan wali kelas: ' . $e->getMessage()];
     }
     header("Location: walikelas.php");
     exit();
@@ -40,11 +50,11 @@ if (!empty($search)) {
 }
 
 // Query menggunakan SELECT ta.* untuk keamanan nama kolom
-$query_data = "SELECT wk.*, g.nama as nama_guru, k.nama as nama_kelas, ta.* 
-               FROM t_wali_kelas wk 
-               LEFT JOIN t_guru g ON wk.guru_id = g.id 
-               LEFT JOIN t_kelas k ON wk.kelas_id = k.id 
-               LEFT JOIN t_tahun_ajaran ta ON wk.tahun_ajaran_id = ta.id 
+$query_data = "SELECT wk.*, g.nama as nama_guru, k.nama as nama_kelas, ta.*
+               FROM t_wali_kelas wk
+               LEFT JOIN t_guru g ON wk.guru_id = g.id
+               LEFT JOIN t_kelas k ON wk.kelas_id = k.id
+               LEFT JOIN t_tahun_ajaran ta ON wk.tahun_ajaran_id = ta.id
                $where
                ORDER BY wk.id DESC";
 $result = mysqli_query($koneksi, $query_data);
@@ -52,7 +62,7 @@ $result = mysqli_query($koneksi, $query_data);
 // Source Dropdown
 $guru_list = mysqli_query($koneksi, "SELECT * FROM t_guru ORDER BY nama ASC");
 $kelas_list = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
-$ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DESC");
+$ta_list = tahun_ajaran_pilihan($koneksi);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -61,7 +71,7 @@ $ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DESC
     <?php include 'layouts/head.php'; ?>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex">
-    
+
     <?php include 'layouts/sidebar.php'; ?>
 
     <main class="flex-1 p-8 bg-slate-50 overflow-y-auto">
@@ -102,7 +112,7 @@ $ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DESC
                     </thead>
                     <tbody>
                         <?php if ($result && mysqli_num_rows($result) > 0): ?>
-                            <?php while ($data = mysqli_fetch_assoc($result)): 
+                            <?php while ($data = mysqli_fetch_assoc($result)):
                                 $thn = $data['tahun_ajaran'] ?? $data['nama'] ?? $data['tahun'] ?? '-';
                                 $sem = isset($data['semester']) ? ucfirst($data['semester']) : 'Ganjil';
                             ?>
@@ -139,12 +149,12 @@ $ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DESC
             <form method="POST" action="walikelas.php">
                 <input type="hidden" name="action" id="formAction" value="create">
                 <input type="hidden" name="id" id="dataId">
-                
+
                 <div class="mb-4">
                     <label class="block text-xs font-bold text-slate-700 mb-1">TAHUN AJARAN *</label>
                     <select name="tahun_ajaran_id" id="inputTA" required class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
                         <option value="">-- Pilih Tahun Ajaran --</option>
-                        <?php if ($ta_list): while ($ta = mysqli_fetch_assoc($ta_list)): 
+                        <?php if ($ta_list): while ($ta = mysqli_fetch_assoc($ta_list)):
                             $t_name = $ta['tahun_ajaran'] ?? $ta['nama'] ?? $ta['tahun'] ?? '-';
                             $t_sem = isset($ta['semester']) ? ucfirst($ta['semester']) : 'Ganjil';
                         ?>
@@ -177,7 +187,7 @@ $ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DESC
                     <input type="checkbox" name="status_aktif" id="inputStatus" value="1" checked class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500">
                     <label class="text-sm font-bold text-slate-700">Set Sebagai Wali Kelas Aktif</label>
                 </div>
-                
+
                 <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
                     <button type="button" onclick="closeModal()" class="px-5 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg text-sm hover:bg-slate-300">Batal</button>
                     <button type="submit" class="px-5 py-2 bg-blue-600 text-white font-bold rounded-lg text-sm hover:bg-blue-700">Simpan</button>

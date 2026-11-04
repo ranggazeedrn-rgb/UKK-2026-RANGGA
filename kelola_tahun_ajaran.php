@@ -34,7 +34,7 @@ $result = @mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran $where ORDER BY 
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex">
-    
+
     <?php include 'layouts/sidebar.php'; ?>
 
     <main class="flex-1 p-8 bg-slate-50 overflow-y-auto">
@@ -74,7 +74,7 @@ $result = @mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran $where ORDER BY 
                     </thead>
                     <tbody>
                         <?php if ($result && mysqli_num_rows($result) > 0): ?>
-                            <?php while ($data = mysqli_fetch_assoc($result)): 
+                            <?php while ($data = mysqli_fetch_assoc($result)):
                                 $tgl_mulai = !empty($data['tanggal_mulai']) && $data['tanggal_mulai'] !== '0000-00-00' ? date('d M Y', strtotime($data['tanggal_mulai'])) : '-';
                                 $tgl_selesai = !empty($data['tanggal_selesai']) && $data['tanggal_selesai'] !== '0000-00-00' ? date('d M Y', strtotime($data['tanggal_selesai'])) : '-';
                             ?>
@@ -108,7 +108,7 @@ $result = @mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran $where ORDER BY 
     <script>
         $(document).ready(function() {
             $('#tabelData').DataTable({
-                "searching": false, 
+                "searching": false,
                 "language": {
                     "lengthMenu": "Tampilkan _MENU_ data",
                     "zeroRecords": "Tidak ada data yang ditemukan",

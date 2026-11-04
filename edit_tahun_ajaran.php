@@ -28,16 +28,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         @mysqli_query($koneksi, "UPDATE t_tahun_ajaran SET status_aktif = 0");
     }
 
-    $query = "UPDATE t_tahun_ajaran 
-              SET nama='$nama', tanggal_mulai='$tanggal_mulai', tanggal_selesai='$tanggal_selesai', status_aktif='$status_aktif', updated_at=NOW() 
+    $query = "UPDATE t_tahun_ajaran
+              SET nama='$nama', tanggal_mulai='$tanggal_mulai', tanggal_selesai='$tanggal_selesai', status_aktif='$status_aktif', updated_at=NOW()
               WHERE id='$id'";
-              
-    if(mysqli_query($koneksi, $query)) {
+
+    try {
+        if (mysqli_query($koneksi, $query) === false) {
+            throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+        }
         $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data Tahun Ajaran berhasil diperbarui!'];
         header("Location: kelola_tahun_ajaran.php");
         exit();
-    } else {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: ' . mysqli_error($koneksi)];
+    } catch (mysqli_sql_exception $e) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
+            ? 'Gagal update: tahun ajaran tersebut sudah ada!'
+            : 'Gagal update: ' . $e->getMessage()];
+        // halaman edit tidak menampilkan flash; pesan dilihat di daftar tahun ajaran
+        header("Location: kelola_tahun_ajaran.php");
+        exit();
     }
 }
 ?>
@@ -48,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php include 'layouts/head.php'; ?>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex">
-    
+
     <?php include 'layouts/sidebar.php'; ?>
 
     <main class="flex-1 p-8 bg-slate-50 overflow-y-auto">
@@ -68,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-xs font-bold text-slate-700 mb-2">TAHUN AJARAN *</label>
                     <input type="text" name="nama" value="<?php echo htmlspecialchars($data['nama']); ?>" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                 </div>
-                
+
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">TANGGAL MULAI *</label>
@@ -84,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="checkbox" name="status_aktif" value="1" <?php echo $data['status_aktif'] == 1 ? 'checked' : ''; ?> class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500">
                     <label class="text-sm font-bold text-slate-700">Set Sebagai Tahun Ajaran Aktif</label>
                 </div>
-                
+
                 <div class="pt-4 border-t border-slate-100">
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-sm shadow-md transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-save"></i> Perbarui Tahun Ajaran

@@ -14,25 +14,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $deskripsi = mysqli_real_escape_string($koneksi, $_POST['deskripsi']);
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
 
-    if ($action === 'create') {
-        $query = "INSERT INTO t_pelanggaran (pelanggaran_kategori_id, kode, nama, poin, deskripsi, status_aktif, created_at, updated_at) 
-                  VALUES ('$pelanggaran_kategori_id', '$kode', '$nama', '$poin', '$deskripsi', '$status_aktif', NOW(), NOW())";
-        if (mysqli_query($koneksi, $query)) {
+    try {
+        if ($action === 'create') {
+            $query = "INSERT INTO t_pelanggaran (pelanggaran_kategori_id, kode, nama, poin, deskripsi, status_aktif, created_at, updated_at)
+                      VALUES ('$pelanggaran_kategori_id', '$kode', '$nama', '$poin', '$deskripsi', '$status_aktif', NOW(), NOW())";
+            if (mysqli_query($koneksi, $query) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+            }
             $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data jenis pelanggaran berhasil ditambahkan!'];
-        }
-    } elseif ($action === 'update' && $id) {
-        $query = "UPDATE t_pelanggaran SET 
-                  pelanggaran_kategori_id = '$pelanggaran_kategori_id',
-                  kode = '$kode',
-                  nama = '$nama',
-                  poin = '$poin',
-                  deskripsi = '$deskripsi',
-                  status_aktif = '$status_aktif',
-                  updated_at = NOW()
-                  WHERE id = '$id'";
-        if (mysqli_query($koneksi, $query)) {
+        } elseif ($action === 'update' && $id) {
+            $query = "UPDATE t_pelanggaran SET
+                      pelanggaran_kategori_id = '$pelanggaran_kategori_id',
+                      kode = '$kode',
+                      nama = '$nama',
+                      poin = '$poin',
+                      deskripsi = '$deskripsi',
+                      status_aktif = '$status_aktif',
+                      updated_at = NOW()
+                      WHERE id = '$id'";
+            if (mysqli_query($koneksi, $query) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+            }
             $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data jenis pelanggaran berhasil diperbarui!'];
         }
+    } catch (mysqli_sql_exception $e) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
+            ? 'Gagal menyimpan: kode pelanggaran sudah dipakai!'
+            : 'Gagal menyimpan jenis pelanggaran: ' . $e->getMessage()];
     }
     header("Location: kelola_jenis_pelanggaran.php");
     exit();
@@ -63,10 +71,10 @@ if (!empty($kategori_filter)) {
 
 $where_sql = count($where_clauses) > 0 ? "WHERE " . implode(' AND ', $where_clauses) : "";
 
-$query_data = "SELECT p.*, k.nama AS nama_kategori 
-               FROM t_pelanggaran p 
-               LEFT JOIN t_pelanggaran_kategori k ON p.pelanggaran_kategori_id = k.id 
-               $where_sql 
+$query_data = "SELECT p.*, k.nama AS nama_kategori
+               FROM t_pelanggaran p
+               LEFT JOIN t_pelanggaran_kategori k ON p.pelanggaran_kategori_id = k.id
+               $where_sql
                ORDER BY p.id DESC";
 $result = mysqli_query($koneksi, $query_data);
 
@@ -77,7 +85,7 @@ $kategori_res = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHE
 <head>
     <title>Kelola Jenis Pelanggaran - Sistem Kedisiplinan</title>
     <?php include 'layouts/head.php'; ?>
-    
+
     <!-- CSS DataTables -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <style>
@@ -199,9 +207,9 @@ $kategori_res = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHE
                     <label class="block text-xs font-bold text-slate-700 mb-1">KATEGORI *</label>
                     <select name="pelanggaran_kategori_id" id="inputKategori" required class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
                         <option value="">-- Pilih Kategori --</option>
-                        <?php 
+                        <?php
                         mysqli_data_seek($kategori_res, 0);
-                        while ($kat = mysqli_fetch_assoc($kategori_res)): 
+                        while ($kat = mysqli_fetch_assoc($kategori_res)):
                         ?>
                             <option value="<?php echo $kat['id']; ?>"><?php echo htmlspecialchars($kat['nama']); ?></option>
                         <?php endwhile; ?>

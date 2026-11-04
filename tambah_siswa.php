@@ -12,20 +12,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $alamat = mysqli_real_escape_string($koneksi, $_POST['alamat']);
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
 
-    if (strlen($nis) > 10) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal simpan: NIS maksimal 10 karakter!'];
+    if (strlen($nis) < 9 || strlen($nis) > 10) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal simpan: NIS harus 9 sampai 10 karakter!'];
     } elseif (strlen($nisn) > 20) {
         $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal simpan: NISN maksimal 20 karakter!'];
     } else {
-        $query = "INSERT INTO t_siswa (nis, nisn, nama, jenis_kelamin, tanggal_lahir, alamat, status_aktif, created_at, updated_at) 
-                  VALUES ('$nis', '$nisn', '$nama', '$jenis_kelamin', '$tanggal_lahir', '$alamat', '$status_aktif', NOW(), NOW())";
-        
-        if (mysqli_query($koneksi, $query)) {
+        $query = "INSERT INTO t_siswa (nis, nisn, nama, jenis_kelamin, tanggal_lahir, alamat, status_aktif, created_at, updated_at)
+                  VALUES (NULLIF('$nis', ''), NULLIF('$nisn', ''), '$nama', '$jenis_kelamin', '$tanggal_lahir', '$alamat', '$status_aktif', NOW(), NOW())";
+
+        try {
+            if (mysqli_query($koneksi, $query) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+            }
             $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data Siswa berhasil ditambahkan!'];
             header("Location: kelola_siswa.php");
             exit();
-        } else {
-            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal simpan data: ' . mysqli_error($koneksi)];
+        } catch (mysqli_sql_exception $e) {
+            // 1062 = unique index dilanggar; nama index menunjukkan kolomnya (nisn dicek dulu, "nis" adalah bagian dari "nisn")
+            $kolom = strpos($e->getMessage(), 'uq_t_siswa_nisn') !== false ? 'NISN' : 'NIS';
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
+                ? "Gagal simpan: $kolom sudah dipakai siswa lain!"
+                : 'Gagal simpan data: ' . $e->getMessage()];
         }
     }
 }
@@ -60,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="grid grid-cols-2 gap-6 mb-5">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">NIS * (Maks. 10 karakter)</label>
-                        <input type="text" name="nis" maxlength="10" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                        <input type="text" name="nis" minlength="9" maxlength="10" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">NISN (Maks. 20 karakter)</label>
@@ -96,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="checkbox" name="status_aktif" value="1" checked class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500">
                     <label class="text-sm font-bold text-slate-700">Status Aktif</label>
                 </div>
-                
+
                 <div class="pt-4 border-t border-slate-100">
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-sm shadow-md transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-save"></i> Simpan Data Siswa

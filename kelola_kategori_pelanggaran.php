@@ -9,16 +9,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $nama = mysqli_real_escape_string($koneksi, $_POST['nama']);
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
 
-    if ($action === 'create') {
-        $query = "INSERT INTO t_pelanggaran_kategori (nama, status_aktif, created_at, updated_at) VALUES ('$nama', '$status_aktif', NOW(), NOW())";
-        if (mysqli_query($koneksi, $query)) {
+    try {
+        if ($action === 'create') {
+            $query = "INSERT INTO t_pelanggaran_kategori (nama, status_aktif, created_at, updated_at) VALUES ('$nama', '$status_aktif', NOW(), NOW())";
+            if (mysqli_query($koneksi, $query) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+            }
             $_SESSION['flash'] = ['type' => 'success', 'message' => 'Kategori Pelanggaran berhasil ditambahkan!'];
-        }
-    } elseif ($action === 'update' && $id) {
-        $query = "UPDATE t_pelanggaran_kategori SET nama='$nama', status_aktif='$status_aktif', updated_at=NOW() WHERE id='$id'";
-        if (mysqli_query($koneksi, $query)) {
+        } elseif ($action === 'update' && $id) {
+            $query = "UPDATE t_pelanggaran_kategori SET nama='$nama', status_aktif='$status_aktif', updated_at=NOW() WHERE id='$id'";
+            if (mysqli_query($koneksi, $query) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+            }
             $_SESSION['flash'] = ['type' => 'success', 'message' => 'Kategori Pelanggaran berhasil diperbarui!'];
         }
+    } catch (mysqli_sql_exception $e) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
+            ? 'Gagal menyimpan: nama kategori sudah dipakai!'
+            : 'Gagal menyimpan kategori: ' . $e->getMessage()];
     }
     header("Location: kelola_kategori_pelanggaran.php");
     exit();
@@ -41,7 +49,7 @@ $result = mysqli_query($koneksi, $query_data);
 <head>
     <title>Kelola Kategori Pelanggaran - Sistem Kedisiplinan</title>
     <?php include 'layouts/head.php'; ?>
-    
+
     <!-- CSS DataTables -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <style>

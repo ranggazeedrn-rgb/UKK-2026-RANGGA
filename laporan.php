@@ -17,7 +17,7 @@ if (!empty($kelas_id)) {
 
 $where_sql = count($where) > 0 ? "WHERE " . implode(' AND ', $where) : "";
 
-$query = "SELECT ps.*, s.nis, s.nama AS nama_siswa, k.nama AS nama_kelas, 
+$query = "SELECT ps.*, s.nis, s.nama AS nama_siswa, k.nama AS nama_kelas,
                  p.nama AS nama_pelanggaran, p.poin
           FROM t_pelanggaran_siswa ps
           LEFT JOIN t_siswa s ON ps.siswa_id = s.id

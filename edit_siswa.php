@@ -22,19 +22,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $alamat = mysqli_real_escape_string($koneksi, $_POST['alamat']);
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
 
-    if (strlen($nis) > 10) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: NIS maksimal 10 karakter!'];
+    if (strlen($nis) < 9 || strlen($nis) > 10) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: NIS harus 9 sampai 10 karakter!'];
     } elseif (strlen($nisn) > 20) {
         $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: NISN maksimal 20 karakter!'];
     } else {
-        $query = "UPDATE t_siswa SET nis='$nis', nisn='$nisn', nama='$nama', jenis_kelamin='$jenis_kelamin', tanggal_lahir='$tanggal_lahir', alamat='$alamat', status_aktif='$status_aktif', updated_at=NOW() WHERE id='$id'";
-        
-        if (mysqli_query($koneksi, $query)) {
+        $query = "UPDATE t_siswa SET nis=NULLIF('$nis', ''), nisn=NULLIF('$nisn', ''), nama='$nama', jenis_kelamin='$jenis_kelamin', tanggal_lahir='$tanggal_lahir', alamat='$alamat', status_aktif='$status_aktif', updated_at=NOW() WHERE id='$id'";
+
+        try {
+            if (mysqli_query($koneksi, $query) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+            }
             $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data Siswa berhasil diperbarui!'];
             header("Location: kelola_siswa.php");
             exit();
-        } else {
-            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update data: ' . mysqli_error($koneksi)];
+        } catch (mysqli_sql_exception $e) {
+            // 1062 = unique index dilanggar; nama index menunjukkan kolomnya (nisn dicek dulu, "nis" adalah bagian dari "nisn")
+            $kolom = strpos($e->getMessage(), 'uq_t_siswa_nisn') !== false ? 'NISN' : 'NIS';
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
+                ? "Gagal update: $kolom sudah dipakai siswa lain!"
+                : 'Gagal update data: ' . $e->getMessage()];
+            // halaman edit tidak menampilkan flash; pesan dilihat di daftar siswa
+            header("Location: kelola_siswa.php");
+            exit();
         }
     }
 }
@@ -63,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="grid grid-cols-2 gap-6 mb-5">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">NIS * (Maks. 10 karakter)</label>
-                        <input type="text" name="nis" maxlength="10" value="<?php echo htmlspecialchars($data['nis']); ?>" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                        <input type="text" name="nis" minlength="9" maxlength="10" value="<?php echo htmlspecialchars($data['nis']); ?>" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">NISN (Maks. 20 karakter)</label>
@@ -99,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="checkbox" name="status_aktif" value="1" <?php echo $data['status_aktif'] == 1 ? 'checked' : ''; ?> class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500">
                     <label class="text-sm font-bold text-slate-700">Status Aktif</label>
                 </div>
-                
+
                 <div class="pt-4 border-t border-slate-100">
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-sm shadow-md transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-save"></i> Perbarui Data Siswa

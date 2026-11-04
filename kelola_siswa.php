@@ -36,7 +36,7 @@ $result = mysqli_query($koneksi, $query_data);
 </head>
 <body class="bg-white text-slate-800 font-sans">
     <div class="flex min-h-screen">
-        
+
         <?php include 'layouts/sidebar.php'; ?>
 
         <main class="flex-1 p-8 bg-white overflow-y-auto">
@@ -103,7 +103,7 @@ $result = mysqli_query($koneksi, $query_data);
     <script>
         $(document).ready(function() {
             $('#tabelData').DataTable({
-                "searching": false, 
+                "searching": false,
                 "language": {
                     "lengthMenu": "Tampilkan _MENU_ data",
                     "zeroRecords": "Tidak ada data yang ditemukan",

@@ -8,32 +8,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nama = mysqli_real_escape_string($koneksi, $_POST['nama']);
     $email = mysqli_real_escape_string($koneksi, $_POST['email']);
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
-    
-    if (strlen($nip) > 10) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal simpan: NIP / ID Pegawai maksimal 10 karakter!'];
+
+    if (strlen($nip) !== 18 || !ctype_digit($nip)) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal simpan: NIP harus 18 digit angka!'];
     } else {
-        $password = 'guru123'; 
+        $password = 'guru123';
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        
-        // Simpan ke t_users (menggunakan kolom yg umum pada tabel users)
-        $query_user = "INSERT INTO t_users (name, email, password, role, created_at, updated_at) 
+
+        // Simpan ke t_users lalu t_guru dalam satu transaksi, supaya akun tidak menggantung kalau insert guru gagal
+        $query_user = "INSERT INTO t_users (name, email, password, role, created_at, updated_at)
                        VALUES ('$nama', '$email', '$hashed_password', 'guru', NOW(), NOW())";
-        
-        if (mysqli_query($koneksi, $query_user)) {
-            $new_user_id = mysqli_insert_id($koneksi); 
-            
-            $query_guru = "INSERT INTO t_guru (nip, nama, email, status_aktif, user_id, created_at, updated_at) 
-                           VALUES ('$nip', '$nama', '$email', '$status_aktif', '$new_user_id', NOW(), NOW())";
-            
-            if (mysqli_query($koneksi, $query_guru)) {
-                $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data Guru berhasil ditambahkan! Password login default: guru123'];
-                header("Location: kelola_guru.php");
-                exit();
-            } else {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal simpan biodata: ' . mysqli_error($koneksi)];
+
+        mysqli_begin_transaction($koneksi);
+        try {
+            if (mysqli_query($koneksi, $query_user) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
             }
-        } else {
-            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal membuat akun user: ' . mysqli_error($koneksi)];
+            $new_user_id = mysqli_insert_id($koneksi);
+
+            $query_guru = "INSERT INTO t_guru (nip, nama, email, status_aktif, user_id, created_at, updated_at)
+                           VALUES ('$nip', '$nama', '$email', '$status_aktif', '$new_user_id', NOW(), NOW())";
+
+            if (mysqli_query($koneksi, $query_guru) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+            }
+
+            mysqli_commit($koneksi);
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data Guru berhasil ditambahkan! Password login default: guru123'];
+            header("Location: kelola_guru.php");
+            exit();
+        } catch (mysqli_sql_exception $e) {
+            mysqli_rollback($koneksi);
+            // 1062 = unique index dilanggar; pesannya menyebut index mana (nip / email)
+            if ($e->getCode() === 1062) {
+                $pesan = strpos($e->getMessage(), 'uq_t_guru_nip') !== false ? 'NIP sudah dipakai guru lain!'
+                    : (strpos($e->getMessage(), 'uq_t_guru_email') !== false ? 'Email sudah dipakai guru lain!'
+                    : 'Email sudah dipakai akun user lain!');
+            } else {
+                $pesan = 'Gagal simpan data guru: ' . $e->getMessage();
+            }
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal simpan: ' . $pesan];
         }
     }
 }
@@ -67,8 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="POST" action="">
                 <div class="grid grid-cols-2 gap-6 mb-5">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2">NIP / ID PEGAWAI * (Maks. 10 karakter)</label>
-                        <input type="text" name="nip" maxlength="10" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                        <label class="block text-xs font-bold text-slate-700 mb-2">NIP * (18 digit)</label>
+                        <input type="text" name="nip" inputmode="numeric" pattern="[0-9]{18}" minlength="18" maxlength="18" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">EMAIL AKUN *</label>
@@ -85,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="checkbox" name="status_aktif" value="1" checked class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500">
                     <label class="text-sm font-bold text-slate-700">Status Aktif</label>
                 </div>
-                
+
                 <div class="pt-4 border-t border-slate-100">
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-sm shadow-md transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-save"></i> Simpan Data Guru

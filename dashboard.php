@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'config/koneksi.php'; 
+include 'config/koneksi.php';
 include 'cek_akses.php';
 
 $current_role = $_SESSION['role'] ?? 'Admin';
@@ -34,7 +34,7 @@ $query_ta_aktif = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_tahun_
 $total_ta_aktif = mysqli_fetch_assoc($query_ta_aktif)['total'] ?? 0;
 
 $query_recent = mysqli_query($koneksi, "
-    SELECT 
+    SELECT
         ps.tanggal,
         ps.poin,
         s.nama AS nama_siswa,
@@ -42,7 +42,7 @@ $query_recent = mysqli_query($koneksi, "
     FROM t_pelanggaran_siswa ps
     LEFT JOIN t_siswa s ON ps.siswa_id = s.id
     LEFT JOIN t_kelas k ON ps.kelas_id = k.id
-    ORDER BY ps.tanggal DESC 
+    ORDER BY ps.tanggal DESC
     LIMIT 5
 ");
 
@@ -50,7 +50,7 @@ $query_recent = mysqli_query($koneksi, "
 if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
     $ids = implode(',', $wali_kelas_kelas_ids);
     $query_recent = mysqli_query($koneksi, "
-        SELECT 
+        SELECT
             ps.tanggal,
             ps.poin,
             s.nama AS nama_siswa,
@@ -59,7 +59,7 @@ if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
         LEFT JOIN t_siswa s ON ps.siswa_id = s.id
         LEFT JOIN t_kelas k ON ps.kelas_id = k.id
         WHERE ps.kelas_id IN ($ids)
-        ORDER BY ps.tanggal DESC 
+        ORDER BY ps.tanggal DESC
         LIMIT 5
     ");
 }
@@ -72,13 +72,13 @@ if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
 </head>
 <body class="bg-white text-slate-800 font-sans">
     <div class="flex min-h-screen">
-        
+
         <!-- Sidebar -->
         <?php include 'layouts/sidebar.php'; ?>
 
         <!-- Main Content -->
         <main class="flex-1 p-8 bg-white overflow-y-auto">
-            
+
             <div class="flex justify-between items-center mb-8">
                 <div>
                     <h1 class="text-2xl font-bold text-black">Dashboard Utama</h1>
@@ -100,7 +100,7 @@ if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
                     <i class="fa-solid fa-list-check text-4xl text-blue-600"></i>
                     <div>
                         <h3 class="text-sm font-bold text-black uppercase tracking-wider">Catatan</h3>
-                        <p class="text-2xl font-bold text-blue-600"><?php echo $total_guru; ?></p>
+                        <p class="text-2xl font-bold text-blue-600"><?php echo $total_pelanggaran; ?></p>
                     </div>
                 </div>
 
@@ -173,10 +173,10 @@ if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
                             </tr>
                         </thead>
                         <tbody>
-                            <?php 
+                            <?php
                             $no = 1;
-                            if (mysqli_num_rows($query_recent) > 0): 
-                                while($row = mysqli_fetch_assoc($query_recent)): 
+                            if (mysqli_num_rows($query_recent) > 0):
+                                while ($row = mysqli_fetch_assoc($query_recent)):
                             ?>
                                 <tr>
                                     <td class="border border-slate-300 px-4 py-3 text-sm text-center"><?php echo $no++; ?></td>
@@ -186,9 +186,9 @@ if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
                                         <span class="text-blue-600 font-bold">+<?php echo $row['poin']; ?> Poin</span> - <?php echo date('d/m/Y', strtotime($row['tanggal'])); ?>
                                     </td>
                                 </tr>
-                            <?php 
-                                endwhile; 
-                            else: 
+                            <?php
+                                endwhile;
+                            else:
                             ?>
                                 <tr>
                                     <td colspan="4" class="border border-slate-300 px-4 py-8 text-center text-slate-500">Belum ada pelanggaran.</td>

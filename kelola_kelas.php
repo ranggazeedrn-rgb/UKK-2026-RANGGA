@@ -39,7 +39,7 @@ try {
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex">
-    
+
     <?php include 'layouts/sidebar.php'; ?>
 
     <main class="flex-1 p-8 bg-slate-50 overflow-y-auto">
@@ -110,7 +110,7 @@ try {
     <script>
         $(document).ready(function() {
             $('#tabelData').DataTable({
-                "searching": false, 
+                "searching": false,
                 "language": {
                     "lengthMenu": "Tampilkan _MENU_ data",
                     "zeroRecords": "Tidak ada data yang ditemukan",

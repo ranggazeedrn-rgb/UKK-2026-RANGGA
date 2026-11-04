@@ -35,7 +35,7 @@ $role = $_SESSION['role'] ?? '';
             <a href="kelola_tahun_ajaran.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $current_page == 'kelola_tahun_ajaran.php' ? 'text-blue-600 bg-blue-50 rounded-lg' : ''; ?>">
                 <i class="fa-solid fa-calendar text-lg w-5 text-center"></i> Tahun Ajaran
             </a>
-            
+
             <div class="pt-4 pb-1">
                 <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Plotting / Penempatan</p>
             </div>
@@ -45,7 +45,7 @@ $role = $_SESSION['role'] ?? '';
             <a href="walikelas.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $current_page == 'walikelas.php' ? 'text-blue-600 bg-blue-50 rounded-lg' : ''; ?>">
                 <i class="fa-solid fa-user-tie text-lg w-5 text-center"></i> Kelola Wali Kelas
             </a>
-            
+
             <div class="pt-4 pb-1">
                 <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Data Pelanggaran</p>
             </div>
@@ -70,7 +70,6 @@ $role = $_SESSION['role'] ?? '';
         </a>
         <a href="rekap_point.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $current_page == 'rekap_point.php' ? 'text-blue-600 bg-blue-50 rounded-lg' : ''; ?>">
             <i class="fa-solid fa-calculator text-lg w-5 text-center"></i> Rekap Poin
-
 
         </a>
         <a href="laporan.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $current_page == 'laporan.php' ? 'text-blue-600 bg-blue-50 rounded-lg' : ''; ?>">

@@ -5,7 +5,7 @@ include 'cek_akses.php';
 
 // Fetch data dropdown secara aman
 $kelas_list = @mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
-$ta_list = @mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DESC");
+$ta_list = tahun_ajaran_pilihan($koneksi);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -14,7 +14,7 @@ $ta_list = @mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DES
     <?php include 'layouts/head.php'; ?>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex">
-    
+
     <?php include 'layouts/sidebar.php'; ?>
 
     <main class="flex-1 p-8 bg-slate-50 overflow-y-auto">
@@ -41,7 +41,7 @@ $ta_list = @mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DES
                         <label class="block text-xs font-bold text-slate-700 mb-1">TAHUN AJARAN</label>
                         <select name="tahun_ajaran_id" class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
                             <option value="">-- Semua Tahun Ajaran --</option>
-                            <?php if ($ta_list): while ($ta = mysqli_fetch_assoc($ta_list)): 
+                            <?php if ($ta_list): while ($ta = mysqli_fetch_assoc($ta_list)):
                                 $t_name = $ta['tahun_ajaran'] ?? $ta['nama'] ?? $ta['tahun'] ?? '-';
                                 $t_sem = isset($ta['semester']) ? ucfirst($ta['semester']) : 'Ganjil';
                             ?>
@@ -88,14 +88,14 @@ $ta_list = @mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY id DES
                         <label class="block text-xs font-bold text-slate-700 mb-1">PILIH KELAS</label>
                         <select name="kelas_id" class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
                             <option value="">-- Semua Kelas --</option>
-                            <?php 
+                            <?php
                             if ($kelas_list) {
                                 mysqli_data_seek($kelas_list, 0);
-                                while ($k = mysqli_fetch_assoc($kelas_list)): 
+                                while ($k = mysqli_fetch_assoc($kelas_list)):
                                 ?>
                                     <option value="<?php echo $k['id']; ?>"><?php echo htmlspecialchars($k['nama']); ?></option>
-                                <?php 
-                                endwhile; 
+                                <?php
+                                endwhile;
                             }
                             ?>
                         </select>
