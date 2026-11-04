@@ -12,23 +12,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $guru_id = mysqli_real_escape_string($koneksi, $_POST['guru_id']);
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
 
-    try {
-        if ($action === 'create') {
-            $query = "INSERT INTO t_wali_kelas (tahun_ajaran_id, kelas_id, guru_id, status_aktif, created_at, updated_at)
-                      VALUES ('$tahun_ajaran_id', '$kelas_id', '$guru_id', '$status_aktif', NOW(), NOW())";
-            if (mysqli_query($koneksi, $query) === false) {
-                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+    $id_sql = ($action === 'update' && $id) ? " AND id <> '$id'" : '';
+    $cek_guru = mysqli_query($koneksi, "SELECT id FROM t_wali_kelas WHERE guru_id = '$guru_id' AND tahun_ajaran_id = '$tahun_ajaran_id'$id_sql LIMIT 1");
+    if ($cek_guru && mysqli_num_rows($cek_guru) > 0) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal: guru ini sudah menjadi wali kelas pada tahun ajaran tersebut!'];
+    } else {
+        try {
+            if ($action === 'create') {
+                $query = "INSERT INTO t_wali_kelas (tahun_ajaran_id, kelas_id, guru_id, status_aktif, created_at, updated_at)
+                          VALUES ('$tahun_ajaran_id', '$kelas_id', '$guru_id', '$status_aktif', NOW(), NOW())";
+                if (mysqli_query($koneksi, $query) === false) {
+                    throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+                }
+            } elseif ($action === 'update' && $id) {
+                $query = "UPDATE t_wali_kelas SET tahun_ajaran_id='$tahun_ajaran_id', kelas_id='$kelas_id', guru_id='$guru_id', status_aktif='$status_aktif', updated_at=NOW() WHERE id='$id'";
+                if (mysqli_query($koneksi, $query) === false) {
+                    throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+                }
             }
-        } elseif ($action === 'update' && $id) {
-            $query = "UPDATE t_wali_kelas SET tahun_ajaran_id='$tahun_ajaran_id', kelas_id='$kelas_id', guru_id='$guru_id', status_aktif='$status_aktif', updated_at=NOW() WHERE id='$id'";
-            if (mysqli_query($koneksi, $query) === false) {
-                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
-            }
+        } catch (mysqli_sql_exception $e) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
+                ? 'Gagal: kelas ini sudah punya wali kelas pada tahun ajaran tersebut!'
+                : 'Gagal menyimpan wali kelas: ' . $e->getMessage()];
         }
-    } catch (mysqli_sql_exception $e) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
-            ? 'Gagal: kelas ini sudah punya wali kelas pada tahun ajaran tersebut!'
-            : 'Gagal menyimpan wali kelas: ' . $e->getMessage()];
     }
     header("Location: walikelas.php");
     exit();
@@ -49,8 +55,9 @@ if (!empty($search)) {
     $where = "WHERE g.nama LIKE '%$s%' OR k.nama LIKE '%$s%' OR ta.nama LIKE '%$s%'";
 }
 
-// Query menggunakan SELECT ta.* untuk keamanan nama kolom
-$query_data = "SELECT wk.*, g.nama as nama_guru, k.nama as nama_kelas, ta.*
+// Alias kolom eksplisit: ta.* punya kolom id/status_aktif yang menimpa wk.id
+$query_data = "SELECT wk.id, wk.tahun_ajaran_id, wk.kelas_id, wk.guru_id, wk.status_aktif,
+                      g.nama as nama_guru, k.nama as nama_kelas, ta.nama as nama_ta
                FROM t_wali_kelas wk
                LEFT JOIN t_guru g ON wk.guru_id = g.id
                LEFT JOIN t_kelas k ON wk.kelas_id = k.id
@@ -60,9 +67,13 @@ $query_data = "SELECT wk.*, g.nama as nama_guru, k.nama as nama_kelas, ta.*
 $result = mysqli_query($koneksi, $query_data);
 
 // Source Dropdown
-$guru_list = mysqli_query($koneksi, "SELECT * FROM t_guru ORDER BY nama ASC");
-$kelas_list = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
-$ta_list = tahun_ajaran_pilihan($koneksi);
+$guru_list = mysqli_query($koneksi, "SELECT g.* FROM t_guru g
+    WHERE NOT EXISTS (SELECT 1 FROM t_wali_kelas wk WHERE wk.guru_id = g.id)
+    ORDER BY g.nama ASC");
+$kelas_list = mysqli_query($koneksi, "SELECT k.* FROM t_kelas k
+    WHERE NOT EXISTS (SELECT 1 FROM t_wali_kelas wk WHERE wk.kelas_id = k.id)
+    ORDER BY k.nama ASC");
+$ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE status_aktif = 1 ORDER BY id DESC");
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -113,7 +124,7 @@ $ta_list = tahun_ajaran_pilihan($koneksi);
                     <tbody>
                         <?php if ($result && mysqli_num_rows($result) > 0): ?>
                             <?php while ($data = mysqli_fetch_assoc($result)):
-                                $thn = $data['tahun_ajaran'] ?? $data['nama'] ?? $data['tahun'] ?? '-';
+                                $thn = $data['nama_ta'] ?? '-';
                                 $sem = isset($data['semester']) ? ucfirst($data['semester']) : 'Ganjil';
                             ?>
                                 <tr class="hover:bg-slate-50">
@@ -205,14 +216,23 @@ $ta_list = tahun_ajaran_pilihan($koneksi);
             document.getElementById('inputStatus').checked = true;
         }
 
+        function setSelect(id, value, label) {
+            var el = document.getElementById(id);
+            // opsi hasil filter tidak memuat data lama saat edit, tambahkan bila belum ada
+            if (!el.querySelector('option[value="' + value + '"]')) {
+                el.add(new Option(label || value, value));
+            }
+            el.value = value;
+        }
+
         function openEditModal(data) {
             document.getElementById('modalForm').classList.remove('hidden');
             document.getElementById('modalTitle').innerText = 'Edit Wali Kelas';
             document.getElementById('formAction').value = 'update';
             document.getElementById('dataId').value = data.id;
-            document.getElementById('inputTA').value = data.tahun_ajaran_id;
-            document.getElementById('inputKelas').value = data.kelas_id;
-            document.getElementById('inputGuru').value = data.guru_id;
+            setSelect('inputTA', data.tahun_ajaran_id, data.nama_ta);
+            setSelect('inputKelas', data.kelas_id, data.nama_kelas);
+            setSelect('inputGuru', data.guru_id, data.nama_guru);
             document.getElementById('inputStatus').checked = data.status_aktif == 1;
         }
 

@@ -42,27 +42,14 @@ $query_recent = mysqli_query($koneksi, "
     FROM t_pelanggaran_siswa ps
     LEFT JOIN t_siswa s ON ps.siswa_id = s.id
     LEFT JOIN t_kelas k ON ps.kelas_id = k.id
+    " . ($role === 'Guru'
+        ? (!empty($wali_kelas_kelas_ids)
+            ? "WHERE ps.kelas_id IN (" . implode(',', $wali_kelas_kelas_ids) . ")"
+            : "WHERE 1 = 0")
+        : "") . "
     ORDER BY ps.tanggal DESC
     LIMIT 5
 ");
-
-// Wali kelas melihat pelanggaran terbaru dari kelas yang diampu
-if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
-    $ids = implode(',', $wali_kelas_kelas_ids);
-    $query_recent = mysqli_query($koneksi, "
-        SELECT
-            ps.tanggal,
-            ps.poin,
-            s.nama AS nama_siswa,
-            k.nama AS nama_kelas
-        FROM t_pelanggaran_siswa ps
-        LEFT JOIN t_siswa s ON ps.siswa_id = s.id
-        LEFT JOIN t_kelas k ON ps.kelas_id = k.id
-        WHERE ps.kelas_id IN ($ids)
-        ORDER BY ps.tanggal DESC
-        LIMIT 5
-    ");
-}
 ?>
 <!DOCTYPE html>
 <html lang="id">

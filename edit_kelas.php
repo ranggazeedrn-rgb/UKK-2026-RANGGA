@@ -16,6 +16,10 @@ if (!$data) {
 $tahun_ajaran_list = false;
 try { $tahun_ajaran_list = tahun_ajaran_pilihan($koneksi); } catch (Exception $e) {}
 
+// Jurusan lama yang tidak ada di daftar tetap ditampilkan
+$jurusan_options = ['RPL', 'TKJ', 'BD', 'TKR', 'TSM'];
+if (!in_array($data['jurusan'], $jurusan_options, true)) $jurusan_options[] = $data['jurusan'];
+
 $has_tahun_ajaran = false;
 try {
     $cek_kolom = mysqli_query($koneksi, "SHOW COLUMNS FROM t_kelas LIKE 'tahun_ajaran_id'");
@@ -88,7 +92,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">JURUSAN *</label>
-                        <input type="text" name="jurusan" value="<?php echo htmlspecialchars($data['jurusan']); ?>" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm uppercase focus:border-blue-600 focus:outline-none bg-slate-50">
+                        <select name="jurusan" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                            <option value="">-- Pilih Jurusan --</option>
+                            <?php foreach ($jurusan_options as $j): ?>
+                                <option value="<?php echo $j; ?>" <?php echo $data['jurusan'] === $j ? 'selected' : ''; ?>><?php echo $j; ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                 </div>
 

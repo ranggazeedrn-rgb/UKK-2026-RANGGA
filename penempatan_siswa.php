@@ -48,9 +48,12 @@ $selected_ta = (int)($_GET['tahun_ajaran_id'] ?? 0);
 $selected_kelas = (int)($_GET['kelas_id'] ?? 0);
 
 // Fetch filters secara aman
-$ta_list = tahun_ajaran_pilihan($koneksi);
+$ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE status_aktif = 1 ORDER BY id DESC");
 $kelas_list = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
-$siswa_unallocated = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY nama ASC");
+// Siswa yang belum ditempatkan pada tahun ajaran terpilih
+$siswa_unallocated = mysqli_query($koneksi, "SELECT s.* FROM t_siswa s
+    WHERE NOT EXISTS (SELECT 1 FROM t_kelas_siswa ks WHERE ks.siswa_id = s.id AND ks.tahun_ajaran_id = '$selected_ta')
+    ORDER BY s.nama ASC");
 
 // Opsi kelas dipakai di filter dan modal tambah
 $kelas_options = '';

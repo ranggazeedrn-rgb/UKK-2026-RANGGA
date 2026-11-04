@@ -25,7 +25,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
 
     if ($status_aktif == 1) {
-        @mysqli_query($koneksi, "UPDATE t_tahun_ajaran SET status_aktif = 0");
+        $cek_aktif = mysqli_query($koneksi, "SELECT id FROM t_tahun_ajaran WHERE status_aktif = 1 AND id <> '$id' LIMIT 1");
+        if ($cek_aktif && mysqli_num_rows($cek_aktif) > 0) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: sudah ada tahun ajaran aktif. Non-aktifkan yang lain terlebih dahulu.'];
+            header("Location: kelola_tahun_ajaran.php");
+            exit();
+        }
     }
 
     $query = "UPDATE t_tahun_ajaran

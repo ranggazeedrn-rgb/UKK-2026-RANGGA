@@ -85,7 +85,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">JURUSAN *</label>
-                        <input type="text" name="jurusan" required placeholder="RPL, TKJ, dll" class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm uppercase focus:border-blue-600 focus:outline-none bg-slate-50">
+                        <select name="jurusan" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                            <option value="">-- Pilih Jurusan --</option>
+                            <?php foreach (['RPL', 'TKJ', 'BD', 'TKR', 'TSM'] as $j): ?>
+                                <option value="<?php echo $j; ?>"><?php echo $j; ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                 </div>
 

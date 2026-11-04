@@ -61,8 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="POST" action="login.php">
             <div class="mb-4">
-                <label class="block text-xs font-bold text-slate-800 mb-1.5">Username</label>
-                <input type="email" name="email" required placeholder="Admin" class="w-full border border-slate-400 rounded-lg px-4 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-600">
+                <label class="block text-xs font-bold text-slate-800 mb-1.5">Email</label>
+                <input type="email" name="email" required placeholder="Masukan Email" class="w-full border border-slate-400 rounded-lg px-4 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-600">
             </div>
             <div class="mb-8">
                 <label class="block text-xs font-bold text-slate-800 mb-1.5">Password</label>

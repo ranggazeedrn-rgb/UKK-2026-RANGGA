@@ -18,13 +18,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nama = mysqli_real_escape_string($koneksi, $_POST['nama']);
     $email = mysqli_real_escape_string($koneksi, $_POST['email']);
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
     $user_id = $data['user_id'];
 
     if (strlen($nip) !== 18 || !ctype_digit($nip)) {
         $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: NIP harus 18 digit angka!'];
+    } elseif ($password !== '' && $password !== $confirm_password) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: konfirmasi password tidak cocok!'];
     } else {
         $query_guru = "UPDATE t_guru SET nip = '$nip', nama = '$nama', email = '$email', status_aktif = '$status_aktif', updated_at = NOW() WHERE id = '$id'";
         $query_user = "UPDATE t_users SET name = '$nama', email = '$email', updated_at = NOW() WHERE id = '$user_id'";
+        if ($password !== '') {
+            $hashed_password = mysqli_real_escape_string($koneksi, password_hash($password, PASSWORD_DEFAULT));
+            $query_user = "UPDATE t_users SET name = '$nama', email = '$email', password = '$hashed_password', updated_at = NOW() WHERE id = '$user_id'";
+        }
 
         try {
             if (mysqli_query($koneksi, $query_guru) === false || mysqli_query($koneksi, $query_user) === false) {
@@ -69,6 +77,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
         </div>
 
+        <?php if (isset($_SESSION['flash'])): ?>
+            <div class="max-w-4xl mx-auto p-4 mb-6 rounded-xl text-sm font-bold <?php echo $_SESSION['flash']['type'] === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'; ?>">
+                <?php echo $_SESSION['flash']['message']; unset($_SESSION['flash']); ?>
+            </div>
+        <?php endif; ?>
+
         <div class="max-w-4xl mx-auto bg-white p-8 rounded-[1.5rem] shadow-sm border border-slate-200">
             <form method="POST" action="">
                 <div class="grid grid-cols-2 gap-6 mb-5">
@@ -79,6 +93,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">EMAIL AKUN *</label>
                         <input type="email" name="email" value="<?php echo htmlspecialchars($data['email']); ?>" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6 mb-5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">PASSWORD (Opsional)</label>
+                        <input type="password" name="password" placeholder="Kosongkan jika tidak diubah" class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">KONFIRMASI PASSWORD</label>
+                        <input type="password" name="confirm_password" placeholder="Ulangi password baru" class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                     </div>
                 </div>
 

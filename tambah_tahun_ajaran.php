@@ -10,24 +10,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tanggal_selesai = mysqli_real_escape_string($koneksi, $_POST['tanggal_selesai']);
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
 
-    if ($status_aktif == 1) {
-        @mysqli_query($koneksi, "UPDATE t_tahun_ajaran SET status_aktif = 0");
-    }
+    $cek_aktif = mysqli_query($koneksi, "SELECT id FROM t_tahun_ajaran WHERE status_aktif = 1 LIMIT 1");
+    if ($status_aktif == 1 && $cek_aktif && mysqli_num_rows($cek_aktif) > 0) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal simpan: sudah ada tahun ajaran aktif. Non-aktifkan yang lain terlebih dahulu.'];
+    } else {
+        $query = "INSERT INTO t_tahun_ajaran (nama, tanggal_mulai, tanggal_selesai, status_aktif, created_at, updated_at)
+                  VALUES ('$nama', '$tanggal_mulai', '$tanggal_selesai', '$status_aktif', NOW(), NOW())";
 
-    $query = "INSERT INTO t_tahun_ajaran (nama, tanggal_mulai, tanggal_selesai, status_aktif, created_at, updated_at)
-              VALUES ('$nama', '$tanggal_mulai', '$tanggal_selesai', '$status_aktif', NOW(), NOW())";
-
-    try {
-        if (mysqli_query($koneksi, $query) === false) {
-            throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+        try {
+            if (mysqli_query($koneksi, $query) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+            }
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data Tahun Ajaran berhasil ditambahkan!'];
+            header("Location: kelola_tahun_ajaran.php");
+            exit();
+        } catch (mysqli_sql_exception $e) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
+                ? 'Gagal menyimpan: tahun ajaran tersebut sudah ada!'
+                : 'Gagal menyimpan: ' . $e->getMessage()];
         }
-        $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data Tahun Ajaran berhasil ditambahkan!'];
-        header("Location: kelola_tahun_ajaran.php");
-        exit();
-    } catch (mysqli_sql_exception $e) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
-            ? 'Gagal menyimpan: tahun ajaran tersebut sudah ada!'
-            : 'Gagal menyimpan: ' . $e->getMessage()];
     }
 }
 ?>
