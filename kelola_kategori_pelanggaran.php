@@ -90,32 +90,6 @@ $result = mysqli_query($koneksi, $query_data);
         </div>
     </main>
 
-    <!-- Modal Form -->
-    <div id="modalForm" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white max-w-md w-full p-8 rounded-2xl shadow-xl">
-            <h3 id="modalTitle" class="text-xl font-bold text-black mb-6">Form Kategori</h3>
-            <form method="POST" action="kelola_kategori_pelanggaran.php">
-                <input type="hidden" name="action" id="formAction" value="create">
-                <input type="hidden" name="id" id="dataId">
-
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-700 mb-1">NAMA KATEGORI *</label>
-                    <input type="text" name="nama" id="inputNama" required placeholder="Contoh: Kerajinan, Sikap" class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
-                </div>
-
-                <div class="flex items-center gap-2 mb-6">
-                    <input type="checkbox" name="status_aktif" id="inputStatus" value="1" checked class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500">
-                    <label class="text-sm font-bold text-slate-700">Set Kategori Aktif</label>
-                </div>
-
-                <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
-                    <button type="button" onclick="closeModal()" class="px-5 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg text-sm hover:bg-slate-300">Batal</button>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white font-bold rounded-lg text-sm hover:bg-blue-700">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- JS jQuery dan DataTables -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -138,28 +112,6 @@ $result = mysqli_query($koneksi, $query_data);
                 }
             });
         });
-    </script>
-
-    <script>
-        function openModal(mode) {
-            document.getElementById('modalForm').classList.remove('hidden');
-            document.getElementById('modalTitle').innerText = 'Tambah Kategori Pelanggaran';
-            document.getElementById('formAction').value = 'create';
-            document.getElementById('dataId').value = '';
-            document.getElementById('inputNama').value = '';
-            document.getElementById('inputStatus').checked = true;
-        }
-
-        function openEditModal(data) {
-            document.getElementById('modalForm').classList.remove('hidden');
-            document.getElementById('modalTitle').innerText = 'Edit Kategori Pelanggaran';
-            document.getElementById('formAction').value = 'update';
-            document.getElementById('dataId').value = data.id;
-            document.getElementById('inputNama').value = data.nama;
-            document.getElementById('inputStatus').checked = data.status_aktif == 1;
-        }
-
-        function closeModal() { document.getElementById('modalForm').classList.add('hidden'); }
     </script>
 </body>
 </html>
