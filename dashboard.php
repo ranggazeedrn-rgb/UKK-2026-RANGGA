@@ -18,13 +18,23 @@ if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
     }
 }
 
-$query_siswa = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_siswa");
+if ($role === 'Guru') {
+    $ids_kelas = implode(',', array_map('intval', $wali_kelas_kelas_ids));
+    $query_siswa = $ids_kelas === ''
+        ? mysqli_query($koneksi, "SELECT 0 as total")
+        : mysqli_query($koneksi, "SELECT COUNT(DISTINCT s.id) as total FROM t_siswa s INNER JOIN t_kelas_siswa ks ON ks.siswa_id = s.id WHERE ks.kelas_id IN ($ids_kelas)");
+    $query_pelanggaran = $ids_kelas === ''
+        ? mysqli_query($koneksi, "SELECT 0 as total")
+        : mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa WHERE kelas_id IN ($ids_kelas)");
+} else {
+    $query_siswa = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_siswa");
+    $query_pelanggaran = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa");
+}
 $total_siswa = mysqli_fetch_assoc($query_siswa)['total'] ?? 0;
 
 $query_guru = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_guru");
 $total_guru = mysqli_fetch_assoc($query_guru)['total'] ?? 0;
 
-$query_pelanggaran = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa");
 $total_pelanggaran = mysqli_fetch_assoc($query_pelanggaran)['total'] ?? 0;
 
 $query_kelas = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_kelas");

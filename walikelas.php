@@ -3,43 +3,6 @@ session_start();
 include 'config/koneksi.php';
 include 'cek_akses.php';
 
-// Proses Simpan / Edit / Hapus Wali Kelas
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $action = $_POST['action'];
-    $id = $_POST['id'] ?? null;
-    $tahun_ajaran_id = mysqli_real_escape_string($koneksi, $_POST['tahun_ajaran_id']);
-    $kelas_id = mysqli_real_escape_string($koneksi, $_POST['kelas_id']);
-    $guru_id = mysqli_real_escape_string($koneksi, $_POST['guru_id']);
-    $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
-
-    $id_sql = ($action === 'update' && $id) ? " AND id <> '$id'" : '';
-    $cek_guru = mysqli_query($koneksi, "SELECT id FROM t_wali_kelas WHERE guru_id = '$guru_id' AND tahun_ajaran_id = '$tahun_ajaran_id'$id_sql LIMIT 1");
-    if ($cek_guru && mysqli_num_rows($cek_guru) > 0) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal: guru ini sudah menjadi wali kelas pada tahun ajaran tersebut!'];
-    } else {
-        try {
-            if ($action === 'create') {
-                $query = "INSERT INTO t_wali_kelas (tahun_ajaran_id, kelas_id, guru_id, status_aktif, created_at, updated_at)
-                          VALUES ('$tahun_ajaran_id', '$kelas_id', '$guru_id', '$status_aktif', NOW(), NOW())";
-                if (mysqli_query($koneksi, $query) === false) {
-                    throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
-                }
-            } elseif ($action === 'update' && $id) {
-                $query = "UPDATE t_wali_kelas SET tahun_ajaran_id='$tahun_ajaran_id', kelas_id='$kelas_id', guru_id='$guru_id', status_aktif='$status_aktif', updated_at=NOW() WHERE id='$id'";
-                if (mysqli_query($koneksi, $query) === false) {
-                    throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
-                }
-            }
-        } catch (mysqli_sql_exception $e) {
-            $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
-                ? 'Gagal: kelas ini sudah punya wali kelas pada tahun ajaran tersebut!'
-                : 'Gagal menyimpan wali kelas: ' . $e->getMessage()];
-        }
-    }
-    header("Location: walikelas.php");
-    exit();
-}
-
 if (isset($_GET['delete_id'])) {
     $id = (int)$_GET['delete_id'];
     mysqli_query($koneksi, "DELETE FROM t_wali_kelas WHERE id = '$id'");
@@ -65,15 +28,6 @@ $query_data = "SELECT wk.id, wk.tahun_ajaran_id, wk.kelas_id, wk.guru_id, wk.sta
                $where
                ORDER BY wk.id DESC";
 $result = mysqli_query($koneksi, $query_data);
-
-// Source Dropdown
-$guru_list = mysqli_query($koneksi, "SELECT g.* FROM t_guru g
-    WHERE NOT EXISTS (SELECT 1 FROM t_wali_kelas wk WHERE wk.guru_id = g.id)
-    ORDER BY g.nama ASC");
-$kelas_list = mysqli_query($koneksi, "SELECT k.* FROM t_kelas k
-    WHERE NOT EXISTS (SELECT 1 FROM t_wali_kelas wk WHERE wk.kelas_id = k.id)
-    ORDER BY k.nama ASC");
-$ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE status_aktif = 1 ORDER BY id DESC");
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -91,9 +45,9 @@ $ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE status_akt
                 <h1 class="text-2xl font-bold text-black">Kelola Wali Kelas</h1>
                 <p class="text-sm font-bold text-slate-500 mt-1">Penetapan guru sebagai wali kelas per tahun ajaran.</p>
             </div>
-            <button onclick="openModal('create')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
+            <a href="tambah_walikelas.php" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i> Tetapkan Wali Kelas
-            </button>
+            </a>
         </div>
 
         <?php if (isset($_SESSION['flash'])): ?>
@@ -137,7 +91,7 @@ $ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE status_akt
                                         <?php echo (isset($data['status_aktif']) && $data['status_aktif'] == 1) ? '<span class="text-green-600 font-bold bg-green-100 px-2 py-1 rounded text-xs">Aktif</span>' : '<span class="text-slate-500 font-bold bg-slate-100 px-2 py-1 rounded text-xs">Non-Aktif</span>'; ?>
                                     </td>
                                     <td class="border border-slate-300 px-4 py-3 text-sm text-center">
-                                        <button onclick='openEditModal(<?php echo json_encode($data); ?>)' class="text-blue-600 font-bold mr-2 hover:underline">Edit</button>
+                                        <a href="edit_walikelas.php?id=<?php echo $data['id']; ?>" class="text-blue-600 font-bold mr-2 hover:underline">Edit</a>
                                         <a href="walikelas.php?delete_id=<?php echo $data['id']; ?>" onclick="return confirm('Hapus penetapan wali kelas ini?')" class="text-red-600 font-bold hover:underline">Hapus</a>
                                     </td>
                                 </tr>
@@ -152,93 +106,5 @@ $ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE status_akt
             </div>
         </div>
     </main>
-
-    <!-- Modal Form -->
-    <div id="modalForm" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white max-w-md w-full p-8 rounded-2xl shadow-xl">
-            <h3 id="modalTitle" class="text-xl font-bold text-black mb-6">Form Wali Kelas</h3>
-            <form method="POST" action="walikelas.php">
-                <input type="hidden" name="action" id="formAction" value="create">
-                <input type="hidden" name="id" id="dataId">
-
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-700 mb-1">TAHUN AJARAN *</label>
-                    <select name="tahun_ajaran_id" id="inputTA" required class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
-                        <option value="">-- Pilih Tahun Ajaran --</option>
-                        <?php if ($ta_list): while ($ta = mysqli_fetch_assoc($ta_list)):
-                            $t_name = $ta['tahun_ajaran'] ?? $ta['nama'] ?? $ta['tahun'] ?? '-';
-                            $t_sem = isset($ta['semester']) ? ucfirst($ta['semester']) : 'Ganjil';
-                        ?>
-                            <option value="<?php echo $ta['id']; ?>"><?php echo htmlspecialchars($t_name); ?> (<?php echo htmlspecialchars($t_sem); ?>)</option>
-                        <?php endwhile; endif; ?>
-                    </select>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-700 mb-1">KELAS *</label>
-                    <select name="kelas_id" id="inputKelas" required class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
-                        <option value="">-- Pilih Kelas --</option>
-                        <?php if ($kelas_list): while ($k = mysqli_fetch_assoc($kelas_list)): ?>
-                            <option value="<?php echo $k['id']; ?>"><?php echo htmlspecialchars($k['nama']); ?></option>
-                        <?php endwhile; endif; ?>
-                    </select>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-700 mb-1">GURU (WALI KELAS) *</label>
-                    <select name="guru_id" id="inputGuru" required class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
-                        <option value="">-- Pilih Guru --</option>
-                        <?php if ($guru_list): while ($g = mysqli_fetch_assoc($guru_list)): ?>
-                            <option value="<?php echo $g['id']; ?>"><?php echo htmlspecialchars($g['nama']); ?></option>
-                        <?php endwhile; endif; ?>
-                    </select>
-                </div>
-
-                <div class="flex items-center gap-2 mb-6">
-                    <input type="checkbox" name="status_aktif" id="inputStatus" value="1" checked class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500">
-                    <label class="text-sm font-bold text-slate-700">Set Sebagai Wali Kelas Aktif</label>
-                </div>
-
-                <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
-                    <button type="button" onclick="closeModal()" class="px-5 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg text-sm hover:bg-slate-300">Batal</button>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white font-bold rounded-lg text-sm hover:bg-blue-700">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        function openModal(mode) {
-            document.getElementById('modalForm').classList.remove('hidden');
-            document.getElementById('modalTitle').innerText = 'Tetapkan Wali Kelas';
-            document.getElementById('formAction').value = 'create';
-            document.getElementById('dataId').value = '';
-            document.getElementById('inputStatus').checked = true;
-        }
-
-        function setSelect(id, value, label) {
-            var el = document.getElementById(id);
-            // opsi hasil filter tidak memuat data lama saat edit, tambahkan bila belum ada
-            if (!el.querySelector('option[value="' + value + '"]')) {
-                el.add(new Option(label || value, value));
-            }
-            el.value = value;
-        }
-
-        function openEditModal(data) {
-            document.getElementById('modalForm').classList.remove('hidden');
-            document.getElementById('modalTitle').innerText = 'Edit Wali Kelas';
-            document.getElementById('formAction').value = 'update';
-            document.getElementById('dataId').value = data.id;
-            setSelect('inputTA', data.tahun_ajaran_id, data.nama_ta);
-            setSelect('inputKelas', data.kelas_id, data.nama_kelas);
-            setSelect('inputGuru', data.guru_id, data.nama_guru);
-            document.getElementById('inputStatus').checked = data.status_aktif == 1;
-        }
-
-        function closeModal() {
-            document.getElementById('modalForm').classList.add('hidden');
-        }
-    </script>
 </body>
 </html>

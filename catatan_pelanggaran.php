@@ -12,14 +12,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_pelanggaran'])
     $tindakan       = mysqli_real_escape_string($koneksi, $_POST['tindakan']);
 
     if (!empty($siswa_id) && !empty($pelanggaran_id) && !empty($tanggal)) {
+        // Guru hanya boleh mencatat siswa dari kelas yang ia ampu
+        if ($role === 'Guru') {
+            $cek_siswa = mysqli_query($koneksi, "SELECT 1 FROM t_kelas_siswa WHERE siswa_id = '$siswa_id' AND " . batas_kelas_guru('kelas_id', $role, $wali_kelas_kelas_ids) . " LIMIT 1");
+            if (!$cek_siswa || mysqli_num_rows($cek_siswa) === 0) {
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal: siswa tersebut bukan anggota kelas yang Anda ampu.'];
+                header("Location: catatan_pelanggaran.php");
+                exit();
+            }
+        }
+
         // Simpan nama siswa, kelas terbaru, dan poin agar catatan langsung tampil lengkap
+        $filter_kelas = ($role === 'Guru') ? " AND " . batas_kelas_guru('ks.kelas_id', $role, $wali_kelas_kelas_ids) : "";
         $info = mysqli_fetch_assoc(mysqli_query($koneksi, "
             SELECT s.nama AS nama_siswa, p.poin, ks.kelas_id, k.nama AS nama_kelas
             FROM t_siswa s
             CROSS JOIN t_pelanggaran p
             LEFT JOIN t_kelas_siswa ks ON ks.siswa_id = s.id
             LEFT JOIN t_kelas k ON ks.kelas_id = k.id
-            WHERE s.id = '$siswa_id' AND p.id = '$pelanggaran_id'
+            WHERE s.id = '$siswa_id' AND p.id = '$pelanggaran_id'$filter_kelas
             ORDER BY ks.id DESC
             LIMIT 1
         ")) ?: [];
@@ -43,10 +54,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_pelanggaran'])
 }
 
 // Ambil filter kelas dari URL
-$selected_kelas = $_GET['kelas_id'] ?? '';
+$selected_kelas = isset($_GET['kelas_id']) ? (int)$_GET['kelas_id'] : '';
+if ($role === 'Guru' && !empty($selected_kelas) && !in_array($selected_kelas, $wali_kelas_kelas_ids, true)) {
+    $selected_kelas = '';
+}
 
 // Fetch Data Dropdown Kelas & Jenis Pelanggaran
-$kelas_list = @mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
+$sql_kelas = "SELECT * FROM t_kelas";
+if ($role === 'Guru') {
+    $sql_kelas .= " WHERE " . batas_kelas_guru('id', $role, $wali_kelas_kelas_ids);
+}
+$sql_kelas .= " ORDER BY nama ASC";
+$kelas_list = @mysqli_query($koneksi, $sql_kelas);
 $pelanggaran_list = @mysqli_query($koneksi, "SELECT * FROM t_pelanggaran WHERE status_aktif = 1 ORDER BY kode ASC");
 
 // Kueri Pengambilan Data Siswa Presisi
@@ -60,17 +79,29 @@ if (!empty($selected_kelas)) {
                     ORDER BY s.nama ASC";
 } else {
     // Menampilkan seluruh siswa jika filter kelas tidak dipilih
+    $sub_kelas = "SELECT k2.nama FROM t_kelas_siswa ks2 JOIN t_kelas k2 ON ks2.kelas_id = k2.id WHERE ks2.siswa_id = s.id";
+    if ($role === 'Guru') {
+        $sub_kelas .= " AND " . batas_kelas_guru('ks2.kelas_id', $role, $wali_kelas_kelas_ids);
+    }
     $query_siswa = "SELECT s.*,
-                    (SELECT k2.nama FROM t_kelas_siswa ks2 JOIN t_kelas k2 ON ks2.kelas_id = k2.id WHERE ks2.siswa_id = s.id ORDER BY ks2.id DESC LIMIT 1) AS nama_kelas
-                    FROM t_siswa s
-                    ORDER BY s.nama ASC";
+                    ($sub_kelas ORDER BY ks2.id DESC LIMIT 1) AS nama_kelas
+                    FROM t_siswa s";
+    if ($role === 'Guru') {
+        $query_siswa .= " WHERE EXISTS (SELECT 1 FROM t_kelas_siswa ksw WHERE ksw.siswa_id = s.id AND " . batas_kelas_guru('ksw.kelas_id', $role, $wali_kelas_kelas_ids) . ")";
+    }
+    $query_siswa .= " ORDER BY s.nama ASC";
 }
 
 $siswa_list = @mysqli_query($koneksi, $query_siswa);
 
 // Fallback jika tidak ada data dari kueri di atas
 if (!$siswa_list || mysqli_num_rows($siswa_list) == 0) {
-    $siswa_list = @mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY nama ASC");
+    $query_fallback = "SELECT s.* FROM t_siswa s";
+    if ($role === 'Guru') {
+        $query_fallback .= " WHERE EXISTS (SELECT 1 FROM t_kelas_siswa ksw WHERE ksw.siswa_id = s.id AND " . batas_kelas_guru('ksw.kelas_id', $role, $wali_kelas_kelas_ids) . ")";
+    }
+    $query_fallback .= " ORDER BY s.nama ASC";
+    $siswa_list = @mysqli_query($koneksi, $query_fallback);
 }
 ?>
 <!DOCTYPE html>

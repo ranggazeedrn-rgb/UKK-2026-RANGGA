@@ -5,6 +5,7 @@ include 'cek_akses.php';
 
 // Kueri presisi mengambil riwayat pelanggaran, siswa, kelas, dan poin pelanggaran
 // nama_kelas: utamakan kelas saat pelanggaran (ps.kelas_id), fallback ke penempatan t_kelas_siswa
+$where = ($role === 'Guru') ? "WHERE " . batas_kelas_guru('ps.kelas_id', $role, $wali_kelas_kelas_ids) : "";
 $query = "SELECT ps.*,
                  s.nama AS nama_siswa, s.nis,
                  p.nama AS nama_pelanggaran, p.poin,
@@ -13,6 +14,7 @@ $query = "SELECT ps.*,
           LEFT JOIN t_siswa s ON ps.siswa_id = s.id
           LEFT JOIN t_pelanggaran p ON ps.pelanggaran_id = p.id
           LEFT JOIN t_kelas ka ON ps.kelas_id = ka.id
+          $where
           ORDER BY ps.tanggal DESC, ps.id DESC";
 
 $rows = [];

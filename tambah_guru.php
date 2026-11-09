@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="grid grid-cols-2 gap-6 mb-5">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">NIP * (18 digit)</label>
-                        <input type="text" name="nip" inputmode="numeric" pattern="[0-9]{18}" minlength="18" maxlength="18" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                        <input type="text" name="nip" inputmode="numeric" pattern="[0-9]{18}" minlength="18" maxlength="18" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">EMAIL AKUN *</label>

@@ -3,38 +3,6 @@ session_start();
 include 'config/koneksi.php';
 include 'cek_akses.php';
 
-// Proses Tambah Siswa ke Kelas (t_kelas_siswa)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $action = $_POST['action'];
-    $tahun_ajaran_id = mysqli_real_escape_string($koneksi, $_POST['tahun_ajaran_id']);
-    $kelas_id = mysqli_real_escape_string($koneksi, $_POST['kelas_id']);
-    $siswa_id = mysqli_real_escape_string($koneksi, $_POST['siswa_id']);
-
-    if ($action === 'create') {
-        // tanggal_mulai/tanggal_selesai wajib (NOT NULL), ambil dari periode tahun ajaran
-        $tanggal_mulai = $tanggal_selesai = date('Y-m-d');
-        if ($res_ta = mysqli_query($koneksi, "SELECT tanggal_mulai, tanggal_selesai FROM t_tahun_ajaran WHERE id = '$tahun_ajaran_id'")) {
-            if ($ta = mysqli_fetch_assoc($res_ta)) {
-                $tanggal_mulai = $ta['tanggal_mulai'];
-                $tanggal_selesai = $ta['tanggal_selesai'];
-            }
-        }
-        $query = "INSERT INTO t_kelas_siswa (tahun_ajaran_id, kelas_id, siswa_id, tanggal_mulai, tanggal_selesai, status_aktif)
-                  VALUES ('$tahun_ajaran_id', '$kelas_id', '$siswa_id', '$tanggal_mulai', '$tanggal_selesai', 1)";
-        try {
-            if (mysqli_query($koneksi, $query) === false) {
-                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
-            }
-        } catch (mysqli_sql_exception $e) {
-            $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
-                ? 'Gagal: siswa sudah punya kelas pada tahun ajaran ini!'
-                : 'Gagal menyimpan penempatan: ' . $e->getMessage()];
-        }
-    }
-    header("Location: penempatan_siswa.php?tahun_ajaran_id=$tahun_ajaran_id&kelas_id=$kelas_id");
-    exit();
-}
-
 if (isset($_GET['delete_id'])) {
     $id = (int)$_GET['delete_id'];
     $ta_id = $_GET['tahun_ajaran_id'] ?? '';
@@ -50,12 +18,8 @@ $selected_kelas = (int)($_GET['kelas_id'] ?? 0);
 // Fetch filters secara aman
 $ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE status_aktif = 1 ORDER BY id DESC");
 $kelas_list = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
-// Siswa yang belum ditempatkan pada tahun ajaran terpilih
-$siswa_unallocated = mysqli_query($koneksi, "SELECT s.* FROM t_siswa s
-    WHERE NOT EXISTS (SELECT 1 FROM t_kelas_siswa ks WHERE ks.siswa_id = s.id AND ks.tahun_ajaran_id = '$selected_ta')
-    ORDER BY s.nama ASC");
 
-// Opsi kelas dipakai di filter dan modal tambah
+// Opsi kelas dipakai di filter
 $kelas_options = '';
 while ($k = mysqli_fetch_assoc($kelas_list)) {
     $kelas_options .= '<option value="' . $k['id'] . '"' . ($selected_kelas == $k['id'] ? ' selected' : '') . '>' . htmlspecialchars($k['nama']) . '</option>';
@@ -88,9 +52,9 @@ if ($selected_ta && $selected_kelas) {
                 <p class="text-sm font-bold text-slate-500 mt-1">Atur penempatan siswa ke dalam kelas berdasarkan Tahun Ajaran.</p>
             </div>
             <?php if ($selected_ta): ?>
-                <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
+                <a href="tambah_penempatan_siswa.php?tahun_ajaran_id=<?php echo $selected_ta; ?>&kelas_id=<?php echo $selected_kelas; ?>" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
                     <i class="fa-solid fa-plus"></i> Tambah Siswa ke Kelas
-                </button>
+                </a>
             <?php endif; ?>
         </div>
 
@@ -169,44 +133,5 @@ if ($selected_ta && $selected_kelas) {
             </div>
         </div>
     </main>
-
-    <!-- Modal Form -->
-    <div id="modalForm" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white max-w-md w-full p-8 rounded-2xl shadow-xl">
-            <h3 class="text-xl font-bold text-black mb-6">Tambah Siswa ke Kelas</h3>
-            <form method="POST" action="penempatan_siswa.php">
-                <input type="hidden" name="action" value="create">
-                <input type="hidden" name="tahun_ajaran_id" value="<?php echo htmlspecialchars($selected_ta); ?>">
-
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-700 mb-2">PILIH KELAS *</label>
-                    <select name="kelas_id" required class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
-                        <option value="">-- Pilih Kelas --</option>
-                        <?php echo $kelas_options; ?>
-                    </select>
-                </div>
-
-                <div class="mb-6">
-                    <label class="block text-xs font-bold text-slate-700 mb-2">PILIH SISWA *</label>
-                    <select name="siswa_id" required class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
-                        <option value="">-- Pilih Siswa --</option>
-                        <?php if ($siswa_unallocated): while ($s = mysqli_fetch_assoc($siswa_unallocated)): ?>
-                            <option value="<?php echo $s['id']; ?>"><?php echo htmlspecialchars($s['nis']); ?> - <?php echo htmlspecialchars($s['nama']); ?></option>
-                        <?php endwhile; endif; ?>
-                    </select>
-                </div>
-
-                <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
-                    <button type="button" onclick="closeModal()" class="px-5 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg text-sm hover:bg-slate-300">Batal</button>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white font-bold rounded-lg text-sm hover:bg-blue-700">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        function openModal() { document.getElementById('modalForm').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('modalForm').classList.add('hidden'); }
-    </script>
 </body>
 </html>

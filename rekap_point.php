@@ -3,7 +3,10 @@ session_start();
 include 'config/koneksi.php';
 include 'cek_akses.php';
 
-$kelas_id = isset($_GET['kelas_id']) ? mysqli_real_escape_string($koneksi, $_GET['kelas_id']) : '';
+$kelas_id = isset($_GET['kelas_id']) ? (int)$_GET['kelas_id'] : '';
+if ($role === 'Guru' && !empty($kelas_id) && !in_array($kelas_id, $wali_kelas_kelas_ids, true)) {
+    $kelas_id = '';
+}
 $search = $_GET['search'] ?? '';
 
 // Rekap total poin per siswa. Kelas diutamakan dari penempatan (t_kelas_siswa),
@@ -12,8 +15,12 @@ $search = $_GET['search'] ?? '';
 $join_ps = "LEFT JOIN t_pelanggaran_siswa ps ON s.id = ps.siswa_id";
 $conds = [];
 if (!empty($kelas_id)) {
-    $join_ps = "LEFT JOIN t_pelanggaran_siswa ps ON s.id = ps.siswa_id AND ps.kelas_id = '$kelas_id'";
+    $join_ps .= " AND ps.kelas_id = '$kelas_id'";
     $conds[] = "ps.kelas_id = '$kelas_id'";
+}
+if ($role === 'Guru') {
+    $join_ps .= " AND " . batas_kelas_guru('ps.kelas_id', $role, $wali_kelas_kelas_ids);
+    $conds[] = "EXISTS (SELECT 1 FROM t_kelas_siswa ksw WHERE ksw.siswa_id = s.id AND " . batas_kelas_guru('ksw.kelas_id', $role, $wali_kelas_kelas_ids) . ")";
 }
 if (!empty($search)) {
     $s = mysqli_real_escape_string($koneksi, $search);
@@ -21,10 +28,17 @@ if (!empty($search)) {
 }
 $where = count($conds) > 0 ? "WHERE " . implode(' AND ', $conds) : "";
 
+$sub_ks = "SELECT k2.nama FROM t_kelas_siswa ks2 JOIN t_kelas k2 ON ks2.kelas_id = k2.id WHERE ks2.siswa_id = s.id";
+$sub_ps = "SELECT k3.nama FROM t_pelanggaran_siswa ps3 JOIN t_kelas k3 ON ps3.kelas_id = k3.id WHERE ps3.siswa_id = s.id";
+if ($role === 'Guru') {
+    $sub_ks .= " AND " . batas_kelas_guru('ks2.kelas_id', $role, $wali_kelas_kelas_ids);
+    $sub_ps .= " AND " . batas_kelas_guru('ps3.kelas_id', $role, $wali_kelas_kelas_ids);
+}
+
 $query = "SELECT s.id, s.nama AS nama_siswa,
                  COALESCE(
-                     (SELECT k2.nama FROM t_kelas_siswa ks2 JOIN t_kelas k2 ON ks2.kelas_id = k2.id WHERE ks2.siswa_id = s.id ORDER BY ks2.id DESC LIMIT 1),
-                     (SELECT k3.nama FROM t_pelanggaran_siswa ps3 JOIN t_kelas k3 ON ps3.kelas_id = k3.id WHERE ps3.siswa_id = s.id ORDER BY ps3.id DESC LIMIT 1),
+                     ($sub_ks ORDER BY ks2.id DESC LIMIT 1),
+                     ($sub_ps ORDER BY ps3.id DESC LIMIT 1),
                      '-'
                  ) AS nama_kelas,
                  COALESCE(SUM(p.poin), 0) AS total_poin

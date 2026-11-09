@@ -3,35 +3,6 @@ session_start();
 include 'config/koneksi.php';
 include 'cek_akses.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $action = $_POST['action'];
-    $id = $_POST['id'] ?? null;
-    $nama = mysqli_real_escape_string($koneksi, $_POST['nama']);
-    $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
-
-    try {
-        if ($action === 'create') {
-            $query = "INSERT INTO t_pelanggaran_kategori (nama, status_aktif, created_at, updated_at) VALUES ('$nama', '$status_aktif', NOW(), NOW())";
-            if (mysqli_query($koneksi, $query) === false) {
-                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
-            }
-            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Kategori Pelanggaran berhasil ditambahkan!'];
-        } elseif ($action === 'update' && $id) {
-            $query = "UPDATE t_pelanggaran_kategori SET nama='$nama', status_aktif='$status_aktif', updated_at=NOW() WHERE id='$id'";
-            if (mysqli_query($koneksi, $query) === false) {
-                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
-            }
-            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Kategori Pelanggaran berhasil diperbarui!'];
-        }
-    } catch (mysqli_sql_exception $e) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
-            ? 'Gagal menyimpan: nama kategori sudah dipakai!'
-            : 'Gagal menyimpan kategori: ' . $e->getMessage()];
-    }
-    header("Location: kelola_kategori_pelanggaran.php");
-    exit();
-}
-
 if (isset($_GET['delete_id'])) {
     $id = (int)$_GET['delete_id'];
     if (mysqli_query($koneksi, "DELETE FROM t_pelanggaran_kategori WHERE id = '$id'")) {
@@ -71,9 +42,9 @@ $result = mysqli_query($koneksi, $query_data);
                 <h1 class="text-2xl font-bold text-black">Kelola Kategori Pelanggaran</h1>
                 <p class="text-sm font-bold text-slate-500 mt-1">Atur pengelompokan jenis pelanggaran siswa.</p>
             </div>
-            <button onclick="openModal('create')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
+            <a href="tambah_kategori_pelanggaran.php" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i> Tambah Kategori
-            </button>
+            </a>
         </div>
 
         <?php if (isset($_SESSION['flash'])): ?>
@@ -103,7 +74,7 @@ $result = mysqli_query($koneksi, $query_data);
                                         <?php echo $data['status_aktif'] == 1 ? '<span class="text-green-600 font-bold bg-green-100 px-2 py-1 rounded text-xs">Aktif</span>' : '<span class="text-slate-500 font-bold bg-slate-100 px-2 py-1 rounded text-xs">Non-Aktif</span>'; ?>
                                     </td>
                                     <td class="border border-slate-300 px-4 py-3 text-sm text-center">
-                                        <button onclick='openEditModal(<?php echo json_encode($data); ?>)' class="text-blue-600 font-bold mr-2 hover:underline">Edit</button>
+                                        <a href="edit_kategori_pelanggaran.php?id=<?php echo $data['id']; ?>" class="text-blue-600 font-bold mr-2 hover:underline">Edit</a>
                                         <a href="kelola_kategori_pelanggaran.php?delete_id=<?php echo $data['id']; ?>" onclick="return confirm('Hapus kategori ini?')" class="text-red-600 font-bold hover:underline">Hapus</a>
                                     </td>
                                 </tr>

@@ -64,9 +64,17 @@ $akses_halaman = [
     'riwayat.php' => ['Admin', 'Guru'],
     'dashboard.php' => ['Admin', 'Guru'],
     'kelola_siswa.php' => ['Admin'],
+    'tambah_siswa.php' => ['Admin'],
+    'edit_siswa.php' => ['Admin'],
     'kelola_guru.php' => ['Admin'],
+    'tambah_guru.php' => ['Admin'],
+    'edit_guru.php' => ['Admin'],
     'kelola_kelas.php' => ['Admin'],
+    'tambah_kelas.php' => ['Admin'],
+    'edit_kelas.php' => ['Admin'],
     'kelola_tahun_ajaran.php' => ['Admin'],
+    'tambah_tahun_ajaran.php' => ['Admin'],
+    'edit_tahun_ajaran.php' => ['Admin'],
     'tambah_user.php' => ['Admin'],
     'penempatan_siswa.php' => ['Admin'],
     'walikelas.php' => ['Admin'],
@@ -83,6 +91,20 @@ if (array_key_exists($current_file, $akses_halaman)) {
             header("Location: dashboard.php");
             exit;
         }
+    }
+}
+
+// 7. Batas data guru: hanya kelas yang ditetapkan sebagai wali kelas
+if (!function_exists('batas_kelas_guru')) {
+    function batas_kelas_guru($kolom, $role, array $kelas_ids)
+    {
+        if ($role !== 'Guru') {
+            return '1 = 1';
+        }
+        if (count($kelas_ids) === 0) {
+            return '1 = 0';
+        }
+        return $kolom . ' IN (' . implode(',', array_map('intval', $kelas_ids)) . ')';
     }
 }
 ?>

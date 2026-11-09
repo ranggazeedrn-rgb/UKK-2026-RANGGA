@@ -14,6 +14,9 @@ if (!empty($tahun_ajaran_id)) {
 if (!empty($kelas_id)) {
     $where[] = "ks.kelas_id = '$kelas_id'";
 }
+if ($role === 'Guru') {
+    $where[] = batas_kelas_guru('ps.kelas_id', $role, $wali_kelas_kelas_ids);
+}
 
 $where_sql = count($where) > 0 ? "WHERE " . implode(' AND ', $where) : "";
 

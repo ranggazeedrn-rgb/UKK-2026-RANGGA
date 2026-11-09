@@ -3,49 +3,6 @@ session_start();
 include 'config/koneksi.php';
 include 'cek_akses.php';
 
-// Proses Simpan / Edit Data
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $action = $_POST['action'];
-    $id = $_POST['id'] ?? null;
-    $pelanggaran_kategori_id = mysqli_real_escape_string($koneksi, $_POST['pelanggaran_kategori_id']);
-    $kode = mysqli_real_escape_string($koneksi, $_POST['kode']);
-    $nama = mysqli_real_escape_string($koneksi, $_POST['nama']);
-    $poin = (int)$_POST['poin'];
-    $deskripsi = mysqli_real_escape_string($koneksi, $_POST['deskripsi']);
-    $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
-
-    try {
-        if ($action === 'create') {
-            $query = "INSERT INTO t_pelanggaran (pelanggaran_kategori_id, kode, nama, poin, deskripsi, status_aktif, created_at, updated_at)
-                      VALUES ('$pelanggaran_kategori_id', '$kode', '$nama', '$poin', '$deskripsi', '$status_aktif', NOW(), NOW())";
-            if (mysqli_query($koneksi, $query) === false) {
-                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
-            }
-            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data jenis pelanggaran berhasil ditambahkan!'];
-        } elseif ($action === 'update' && $id) {
-            $query = "UPDATE t_pelanggaran SET
-                      pelanggaran_kategori_id = '$pelanggaran_kategori_id',
-                      kode = '$kode',
-                      nama = '$nama',
-                      poin = '$poin',
-                      deskripsi = '$deskripsi',
-                      status_aktif = '$status_aktif',
-                      updated_at = NOW()
-                      WHERE id = '$id'";
-            if (mysqli_query($koneksi, $query) === false) {
-                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
-            }
-            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data jenis pelanggaran berhasil diperbarui!'];
-        }
-    } catch (mysqli_sql_exception $e) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
-            ? 'Gagal menyimpan: kode pelanggaran sudah dipakai!'
-            : 'Gagal menyimpan jenis pelanggaran: ' . $e->getMessage()];
-    }
-    header("Location: kelola_jenis_pelanggaran.php");
-    exit();
-}
-
 // Proses Hapus Data
 if (isset($_GET['delete_id'])) {
     $delete_id = (int)$_GET['delete_id'];
@@ -107,9 +64,9 @@ $kategori_res = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHE
                 <h1 class="text-2xl font-bold text-black">Kelola Jenis Pelanggaran</h1>
                 <p class="text-sm font-bold text-slate-500 mt-1">Kelola data master kode, nama, dan bobot poin pelanggaran.</p>
             </div>
-            <button onclick="openModal('create')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
+            <a href="tambah_jenis_pelanggaran.php" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i> Tambah Pelanggaran
-            </button>
+            </a>
         </div>
 
         <?php if (isset($_SESSION['flash'])): ?>
@@ -168,7 +125,7 @@ $kategori_res = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHE
                                         <?php echo $data['status_aktif'] == 1 ? '<span class="text-green-600 font-bold bg-green-100 px-2 py-1 rounded text-xs">Aktif</span>' : '<span class="text-slate-500 font-bold bg-slate-100 px-2 py-1 rounded text-xs">Non-Aktif</span>'; ?>
                                     </td>
                                     <td class="border border-slate-300 px-4 py-3 text-sm text-center">
-                                        <button onclick='openEditModal(<?php echo json_encode($data); ?>)' class="text-blue-600 font-bold mr-2 hover:underline">Edit</button>
+                                        <a href="edit_jenis_pelanggaran.php?id=<?php echo $data['id']; ?>" class="text-blue-600 font-bold mr-2 hover:underline">Edit</a>
                                         <a href="kelola_jenis_pelanggaran.php?delete_id=<?php echo $data['id']; ?>" onclick="return confirm('Hapus jenis pelanggaran ini?')" class="text-red-600 font-bold hover:underline">Hapus</a>
                                     </td>
                                 </tr>
@@ -183,61 +140,6 @@ $kategori_res = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHE
             </div>
         </div>
     </main>
-
-    <!-- Modal Form -->
-    <div id="modalForm" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white max-w-md w-full p-8 rounded-2xl shadow-xl">
-            <h3 id="modalTitle" class="text-xl font-bold text-black mb-6">Form Jenis Pelanggaran</h3>
-            <form method="POST" action="kelola_jenis_pelanggaran.php">
-                <input type="hidden" name="action" id="formAction" value="create">
-                <input type="hidden" name="id" id="dataId">
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">KODE *</label>
-                        <input type="text" name="kode" id="inputKode" required placeholder="P01" class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">BOBOT POIN *</label>
-                        <input type="number" name="poin" id="inputPoin" min="1" required placeholder="10" class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-700 mb-1">KATEGORI *</label>
-                    <select name="pelanggaran_kategori_id" id="inputKategori" required class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
-                        <option value="">-- Pilih Kategori --</option>
-                        <?php
-                        mysqli_data_seek($kategori_res, 0);
-                        while ($kat = mysqli_fetch_assoc($kategori_res)):
-                        ?>
-                            <option value="<?php echo $kat['id']; ?>"><?php echo htmlspecialchars($kat['nama']); ?></option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-700 mb-1">NAMA PELANGGARAN *</label>
-                    <input type="text" name="nama" id="inputNama" required placeholder="Terlambat Masuk Sekolah" class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-700 mb-1">DESKRIPSI</label>
-                    <textarea name="deskripsi" id="inputDeskripsi" rows="2" class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none"></textarea>
-                </div>
-
-                <div class="flex items-center gap-2 mb-6">
-                    <input type="checkbox" name="status_aktif" id="inputStatus" value="1" checked class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500">
-                    <label class="text-sm font-bold text-slate-700">Set Pelanggaran Aktif</label>
-                </div>
-
-                <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
-                    <button type="button" onclick="closeModal()" class="px-5 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg text-sm hover:bg-slate-300">Batal</button>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white font-bold rounded-lg text-sm hover:bg-blue-700">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <!-- JS jQuery dan DataTables -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -261,36 +163,6 @@ $kategori_res = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHE
                 }
             });
         });
-    </script>
-
-    <script>
-        function openModal(mode) {
-            document.getElementById('modalForm').classList.remove('hidden');
-            document.getElementById('modalTitle').innerText = 'Tambah Jenis Pelanggaran';
-            document.getElementById('formAction').value = 'create';
-            document.getElementById('dataId').value = '';
-            document.getElementById('inputKode').value = '';
-            document.getElementById('inputPoin').value = '';
-            document.getElementById('inputKategori').value = '';
-            document.getElementById('inputNama').value = '';
-            document.getElementById('inputDeskripsi').value = '';
-            document.getElementById('inputStatus').checked = true;
-        }
-
-        function openEditModal(data) {
-            document.getElementById('modalForm').classList.remove('hidden');
-            document.getElementById('modalTitle').innerText = 'Edit Jenis Pelanggaran';
-            document.getElementById('formAction').value = 'update';
-            document.getElementById('dataId').value = data.id;
-            document.getElementById('inputKode').value = data.kode;
-            document.getElementById('inputPoin').value = data.poin;
-            document.getElementById('inputKategori').value = data.pelanggaran_kategori_id;
-            document.getElementById('inputNama').value = data.nama;
-            document.getElementById('inputDeskripsi').value = data.deskripsi;
-            document.getElementById('inputStatus').checked = data.status_aktif == 1;
-        }
-
-        function closeModal() { document.getElementById('modalForm').classList.add('hidden'); }
     </script>
 </body>
 </html>

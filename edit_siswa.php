@@ -22,10 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $alamat = mysqli_real_escape_string($koneksi, $_POST['alamat']);
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
 
-    if (strlen($nis) < 9 || strlen($nis) > 15) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: NIS harus 9 sampai 15 karakter!'];
-    } elseif (strlen($nisn) > 10) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: NISN maksimal 10 karakter!'];
+    if (strlen($nis) < 9 || strlen($nis) > 15 || !ctype_digit($nis)) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: NIS harus 9 sampai 15 digit angka!'];
+    } elseif (strlen($nisn) > 10 || ($nisn !== '' && !ctype_digit($nisn))) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: NISN maksimal 10 digit angka!'];
     } else {
         $query = "UPDATE t_siswa SET nis=NULLIF('$nis', ''), nisn=NULLIF('$nisn', ''), nama='$nama', jenis_kelamin='$jenis_kelamin', tanggal_lahir='$tanggal_lahir', alamat='$alamat', status_aktif='$status_aktif', updated_at=NOW() WHERE id='$id'";
 
@@ -73,11 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="grid grid-cols-2 gap-6 mb-5">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">NIS * (Maks. 15 karakter)</label>
-                        <input type="text" name="nis" minlength="9" maxlength="15" value="<?php echo htmlspecialchars($data['nis']); ?>" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                        <input type="text" name="nis" inputmode="numeric" pattern="[0-9]{9,15}" minlength="9" maxlength="15" oninput="this.value=this.value.replace(/[^0-9]/g,'')" value="<?php echo htmlspecialchars($data['nis']); ?>" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">NISN (Maks. 10 karakter)</label>
-                        <input type="text" name="nisn" maxlength="10" value="<?php echo htmlspecialchars($data['nisn']); ?>" class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                        <input type="text" name="nisn" inputmode="numeric" pattern="[0-9]{1,10}" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" value="<?php echo htmlspecialchars($data['nisn']); ?>" class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                     </div>
                 </div>
 
