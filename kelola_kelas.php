@@ -94,12 +94,8 @@ try {
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="5" class="border border-slate-300 px-4 py-8 text-center text-slate-500 font-bold">Belum ada data kelas.</td>
-                            </tr>
-                        <?php endif; ?>
                     </tbody>
+                        <?php endif; ?>
                 </table>
             </div>
         </div>
@@ -113,7 +109,7 @@ try {
                 "searching": false,
                 "language": {
                     "lengthMenu": "Tampilkan _MENU_ data",
-                    "zeroRecords": "Tidak ada data yang ditemukan",
+                    "zeroRecords": "Belum ada data kelas.",
                     "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
                     "infoEmpty": "Tidak ada data tersedia",
                     "paginate": { "first": "Pertama", "last": "Terakhir", "next": "Selanjutnya", "previous": "Sebelumnya" }

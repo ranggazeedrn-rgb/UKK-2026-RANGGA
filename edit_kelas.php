@@ -16,6 +16,11 @@ if (!$data) {
 $tahun_ajaran_list = false;
 try { $tahun_ajaran_list = tahun_ajaran_pilihan($koneksi); } catch (Exception $e) {}
 
+// Tahun ajaran aktif otomatis terpilih bila kelas belum punya tahun ajaran
+$ta_aktif_id = tahun_ajaran_aktif_id($koneksi);
+$pilihan_ta_sekarang = (int)($_POST['tahun_ajaran_id'] ?? ($data['tahun_ajaran_id'] ?? 0));
+$ta_terpilih = $pilihan_ta_sekarang > 0 ? $pilihan_ta_sekarang : $ta_aktif_id;
+
 // Jurusan lama yang tidak ada di daftar tetap ditampilkan
 $jurusan_options = ['RPL', 'TKJ', 'BD', 'TKR', 'TSM'];
 if (!in_array($data['jurusan'], $jurusan_options, true)) $jurusan_options[] = $data['jurusan'];
@@ -110,8 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             mysqli_data_seek($tahun_ajaran_list, 0);
                             while ($ta = mysqli_fetch_assoc($tahun_ajaran_list)) {
                                 $t_name = $ta['nama'] ?? 'TA ' . $ta['id'];
-                                $selected = (isset($data['tahun_ajaran_id']) && $data['tahun_ajaran_id'] == $ta['id']) ? 'selected' : '';
-                                echo "<option value='{$ta['id']}' $selected>{$t_name}</option>";
+                                $selected = ((int)$ta['id'] === $ta_terpilih) ? ' selected' : '';
+                                echo "<option value='{$ta['id']}'{$selected}>{$t_name}</option>";
                             }
                         }
                         ?>

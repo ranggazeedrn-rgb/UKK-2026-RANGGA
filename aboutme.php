@@ -52,8 +52,6 @@ include 'cek_akses.php';
             <div class="flex justify-center mb-10">
                 <nav class="flex items-center gap-2 bg-white/80 backdrop-blur-md border border-slate-200 p-1.5 rounded-full shadow-sm">
                     <a href="aboutme.php" class="px-5 py-2 rounded-full bg-blue-600 text-white text-sm font-bold shadow-md">Profil</a>
-                    <a href="skill.php" class="px-5 py-2 rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 text-sm font-bold transition">Skill</a>
-                    <a href="project.php" class="px-5 py-2 rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 text-sm font-bold transition">Proyek</a>
                 </nav>
             </div>
 

@@ -7,6 +7,11 @@ include 'cek_akses.php';
 $tahun_ajaran_list = false;
 try { $tahun_ajaran_list = tahun_ajaran_pilihan($koneksi); } catch (Exception $e) {}
 
+// Tahun ajaran aktif otomatis terpilih pada kolom "Pilih Tahun Ajaran"
+$ta_aktif_id = tahun_ajaran_aktif_id($koneksi);
+$pilihan_ta_sekarang = (int)($_POST['tahun_ajaran_id'] ?? 0);
+$ta_terpilih = $pilihan_ta_sekarang > 0 ? $pilihan_ta_sekarang : $ta_aktif_id;
+
 // Cek kolom tahun_ajaran_id
 $has_tahun_ajaran = false;
 try {
@@ -103,7 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             mysqli_data_seek($tahun_ajaran_list, 0);
                             while ($ta = mysqli_fetch_assoc($tahun_ajaran_list)) {
                                 $t_name = $ta['nama'] ?? 'TA ' . $ta['id'];
-                                echo "<option value='{$ta['id']}'>{$t_name}</option>";
+                                $terpilih = ((int)$ta['id'] === $ta_terpilih) ? ' selected' : '';
+                                echo "<option value='{$ta['id']}'{$terpilih}>{$t_name}</option>";
                             }
                         }
                         ?>

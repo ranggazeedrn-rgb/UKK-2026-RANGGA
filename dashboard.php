@@ -18,17 +18,23 @@ if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
     }
 }
 
-if ($role === 'Guru') {
-    $ids_kelas = implode(',', array_map('intval', $wali_kelas_kelas_ids));
+// Scope data dashboard:
+// - Admin & Wali Kelas : seluruh kelas (wali kelas juga melihat kelas lain)
+// - Guru biasa         : kelas yang diampu + catatan yang dicatat sendiri
+$boleh_semua_kelas = ($role === 'Admin') || ($role === 'Guru' && $is_wali_kelas);
+$guru_scope = $guru_id_login ? 'ps.guru_id = ' . (int)$guru_id_login : '1 = 0';
+$ids_kelas = implode(',', array_map('intval', $wali_kelas_kelas_ids));
+
+if ($boleh_semua_kelas) {
+    $query_siswa = mysqli_query($koneksi, "SELECT COUNT(DISTINCT s.id) as total FROM t_siswa s INNER JOIN t_kelas_siswa ks ON ks.siswa_id = s.id");
+    $query_pelanggaran = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa");
+} else {
     $query_siswa = $ids_kelas === ''
-        ? mysqli_query($koneksi, "SELECT 0 as total")
+        ? mysqli_query($koneksi, "SELECT COUNT(DISTINCT s.id) as total FROM t_siswa s INNER JOIN t_pelanggaran_siswa ps ON ps.siswa_id = s.id WHERE $guru_scope")
         : mysqli_query($koneksi, "SELECT COUNT(DISTINCT s.id) as total FROM t_siswa s INNER JOIN t_kelas_siswa ks ON ks.siswa_id = s.id WHERE ks.kelas_id IN ($ids_kelas)");
     $query_pelanggaran = $ids_kelas === ''
-        ? mysqli_query($koneksi, "SELECT 0 as total")
+        ? mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa ps WHERE $guru_scope")
         : mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa WHERE kelas_id IN ($ids_kelas)");
-} else {
-    $query_siswa = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_siswa");
-    $query_pelanggaran = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa");
 }
 $total_siswa = mysqli_fetch_assoc($query_siswa)['total'] ?? 0;
 
@@ -40,8 +46,18 @@ $total_pelanggaran = mysqli_fetch_assoc($query_pelanggaran)['total'] ?? 0;
 $query_kelas = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_kelas");
 $total_kelas = mysqli_fetch_assoc($query_kelas)['total'] ?? 0;
 
-$query_ta_aktif = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_tahun_ajaran WHERE status_aktif = 1");
-$total_ta_aktif = mysqli_fetch_assoc($query_ta_aktif)['total'] ?? 0;
+// Tahun ajaran aktif (dipakai juga sebagai pilihan default pada semua
+// kolom "Pilih Tahun Ajaran" di seluruh aplikasi)
+$ta_aktif = tahun_ajaran_aktif($koneksi);
+$nama_ta_aktif = nama_tahun_ajaran($ta_aktif);
+
+if ($boleh_semua_kelas) {
+    $where_recent = '';
+} elseif ($ids_kelas !== '') {
+    $where_recent = "WHERE ps.kelas_id IN ($ids_kelas)";
+} else {
+    $where_recent = "WHERE $guru_scope";
+}
 
 $query_recent = mysqli_query($koneksi, "
     SELECT
@@ -52,11 +68,7 @@ $query_recent = mysqli_query($koneksi, "
     FROM t_pelanggaran_siswa ps
     LEFT JOIN t_siswa s ON ps.siswa_id = s.id
     LEFT JOIN t_kelas k ON ps.kelas_id = k.id
-    " . ($role === 'Guru'
-        ? (!empty($wali_kelas_kelas_ids)
-            ? "WHERE ps.kelas_id IN (" . implode(',', $wali_kelas_kelas_ids) . ")"
-            : "WHERE 1 = 0")
-        : "") . "
+    $where_recent
     ORDER BY ps.tanggal DESC
     LIMIT 5
 ");
@@ -82,6 +94,18 @@ $query_recent = mysqli_query($koneksi, "
                     <p class="text-sm font-bold text-slate-500 mt-1">Selamat datang kembali, <?php echo htmlspecialchars($user_name); ?>!</p>
                 </div>
             </div>
+
+            <!-- Info untuk Guru yang belum menjadi Wali Kelas -->
+            <?php if ($role === 'Guru' && !$is_wali_kelas): ?>
+            <div class="bg-amber-50 border border-amber-200 text-amber-800 text-sm font-bold rounded-[1.5rem] px-6 py-4 mb-6 flex items-start gap-3">
+                <i class="fa-solid fa-circle-info mt-1"></i>
+                <span>
+                    Anda adalah <b>Guru</b> (belum ditunjuk sebagai Wali Kelas).
+                    Anda tetap dapat mencatat pelanggaran, memperbarui <b>tindakan</b>, serta membuka halaman <b>Laporan</b>,
+                    namun isi data laporan seluruh kelas hanya ditampilkan bagi Wali Kelas.
+                </span>
+            </div>
+            <?php endif; ?>
 
             <!-- Stats Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -132,7 +156,8 @@ $query_recent = mysqli_query($koneksi, "
                     <i class="fa-solid fa-calendar-days text-4xl text-blue-600"></i>
                     <div>
                         <h3 class="text-sm font-bold text-black uppercase tracking-wider">Tahun Ajaran Aktif</h3>
-                        <p class="text-2xl font-bold text-blue-600"><?php echo $total_ta_aktif; ?></p>
+                        <p class="text-2xl font-bold text-blue-600"><?php echo htmlspecialchars($nama_ta_aktif); ?></p>
+                        <p class="text-[11px] font-bold text-slate-400"><?php echo $ta_aktif ? 'Otomatis dipilih pada kolom tahun ajaran' : 'Belum ada tahun ajaran aktif'; ?></p>
                     </div>
                 </div>
             </div>

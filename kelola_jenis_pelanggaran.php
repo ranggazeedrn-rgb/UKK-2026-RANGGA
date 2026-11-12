@@ -130,10 +130,6 @@ $kategori_res = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHE
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="6" class="border border-slate-300 px-4 py-8 text-center text-slate-500 font-bold">Belum ada data pelanggaran.</td>
-                            </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -150,7 +146,7 @@ $kategori_res = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHE
                 "searching": false, // Menyembunyikan form pencarian bawaan DataTables
                 "language": {
                     "lengthMenu": "Tampilkan _MENU_ data",
-                    "zeroRecords": "Tidak ada data yang ditemukan",
+                    "zeroRecords": "Belum ada data jenis pelanggaran.",
                     "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
                     "infoEmpty": "Tidak ada data tersedia",
                     "infoFiltered": "(disaring dari _MAX_ total data)",

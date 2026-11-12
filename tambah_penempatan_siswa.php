@@ -3,7 +3,13 @@ session_start();
 include 'config/koneksi.php';
 include 'cek_akses.php';
 
+// Tahun ajaran aktif otomatis terpilih bila belum ada filter dari URL
+$ta_aktif_id = tahun_ajaran_aktif_id($koneksi);
+
 $selected_ta = (int)($_GET['tahun_ajaran_id'] ?? 0);
+if ($selected_ta <= 0) {
+    $selected_ta = $ta_aktif_id;
+}
 $selected_kelas = (int)($_GET['kelas_id'] ?? 0);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -43,7 +49,7 @@ if ($selected_ta) {
         WHERE NOT EXISTS (SELECT 1 FROM t_kelas_siswa ks WHERE ks.siswa_id = s.id AND ks.tahun_ajaran_id = '$selected_ta')
         ORDER BY s.nama ASC");
 } else {
-    $siswa_unallocated = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE 0");
+    $siswa_unallocated = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY nama ASC");
 }
 ?>
 <!DOCTYPE html>
@@ -75,14 +81,13 @@ if ($selected_ta) {
             <form method="POST" action="">
                 <div class="mb-5">
                     <label class="block text-xs font-bold text-slate-700 mb-2">TAHUN AJARAN *</label>
-                    <select name="tahun_ajaran_id" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                    <select name="tahun_ajaran_id" id="filter_tahun_ajaran" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50" onchange="window.location='tambah_penempatan_siswa.php?tahun_ajaran_id='+encodeURIComponent(this.value)+'&kelas_id='+encodeURIComponent(document.getElementById('filter_kelas').value);">
                         <option value="">-- Pilih Tahun Ajaran --</option>
                         <?php if ($ta_list): while ($ta = mysqli_fetch_assoc($ta_list)):
-                            $t_name = $ta['tahun_ajaran'] ?? $ta['nama'] ?? $ta['tahun'] ?? '-';
-                            $t_sem = isset($ta['semester']) ? ucfirst($ta['semester']) : 'Ganjil';
+                            $label_ta = nama_tahun_ajaran($ta, 'Ganjil');
                         ?>
-                            <option value="<?php echo $ta['id']; ?>" <?php echo $selected_ta == $ta['id'] ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($t_name); ?> (<?php echo htmlspecialchars($t_sem); ?>)
+                            <option value="<?php echo $ta['id']; ?>"<?php echo ((int)$ta['id'] === (int)$selected_ta) ? ' selected' : ''; ?>>
+                                <?php echo htmlspecialchars($label_ta); ?>
                             </option>
                         <?php endwhile; endif; ?>
                     </select>
@@ -90,7 +95,7 @@ if ($selected_ta) {
 
                 <div class="mb-5">
                     <label class="block text-xs font-bold text-slate-700 mb-2">KELAS *</label>
-                    <select name="kelas_id" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                    <select name="kelas_id" id="filter_kelas" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                         <option value="">-- Pilih Kelas --</option>
                         <?php if ($kelas_list): while ($k = mysqli_fetch_assoc($kelas_list)): ?>
                             <option value="<?php echo $k['id']; ?>" <?php echo $selected_kelas == $k['id'] ? 'selected' : ''; ?>>
@@ -108,7 +113,11 @@ if ($selected_ta) {
                             <option value="<?php echo $s['id']; ?>"><?php echo htmlspecialchars($s['nis']); ?> - <?php echo htmlspecialchars($s['nama']); ?></option>
                         <?php endwhile; endif; ?>
                     </select>
-                    <p class="text-xs text-slate-500 mt-1">Hanya menampilkan siswa yang belum ditempatkan pada tahun ajaran terpilih.</p>
+                    <?php if ($selected_ta): ?>
+                        <p class="text-xs text-slate-500 mt-1">Hanya menampilkan siswa yang belum ditempatkan pada tahun ajaran terpilih.</p>
+                    <?php else: ?>
+                        <p class="text-xs text-slate-500 mt-1">Pilih tahun ajaran untuk menyaring siswa yang belum ditempatkan.</p>
+                    <?php endif; ?>
                 </div>
 
                 <div class="pt-4 border-t border-slate-100">

@@ -21,6 +21,11 @@ $kelas_list = mysqli_query($koneksi, "SELECT k.* FROM t_kelas k
     ORDER BY k.nama ASC");
 $ta_list = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE status_aktif = 1 ORDER BY id DESC");
 
+// Tahun ajaran aktif otomatis terpilih bila belum ada yang tersimpan
+$ta_aktif_id = tahun_ajaran_aktif_id($koneksi);
+$pilihan_ta_sekarang = (int)($_POST['tahun_ajaran_id'] ?? ($data['tahun_ajaran_id'] ?? 0));
+$ta_terpilih = $pilihan_ta_sekarang > 0 ? $pilihan_ta_sekarang : $ta_aktif_id;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tahun_ajaran_id = mysqli_real_escape_string($koneksi, $_POST['tahun_ajaran_id']);
     $kelas_id = mysqli_real_escape_string($koneksi, $_POST['kelas_id']);
@@ -77,11 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <select name="tahun_ajaran_id" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                         <option value="">-- Pilih Tahun Ajaran --</option>
                         <?php if ($ta_list): while ($ta = mysqli_fetch_assoc($ta_list)):
-                            $t_name = $ta['tahun_ajaran'] ?? $ta['nama'] ?? $ta['tahun'] ?? '-';
-                            $t_sem = isset($ta['semester']) ? ucfirst($ta['semester']) : 'Ganjil';
+                            $label_ta = nama_tahun_ajaran($ta, 'Ganjil');
                         ?>
-                            <option value="<?php echo $ta['id']; ?>" <?php echo $data['tahun_ajaran_id'] == $ta['id'] ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($t_name); ?> (<?php echo htmlspecialchars($t_sem); ?>)
+                            <option value="<?php echo $ta['id']; ?>"<?php echo ((int)$ta['id'] === $ta_terpilih) ? ' selected' : ''; ?>>
+                                <?php echo htmlspecialchars($label_ta); ?>
                             </option>
                         <?php endwhile; endif; ?>
                     </select>

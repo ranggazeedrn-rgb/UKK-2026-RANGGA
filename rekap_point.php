@@ -4,10 +4,12 @@ include 'config/koneksi.php';
 include 'cek_akses.php';
 
 $kelas_id = isset($_GET['kelas_id']) ? (int)$_GET['kelas_id'] : '';
-if ($role === 'Guru' && !empty($kelas_id) && !in_array($kelas_id, $wali_kelas_kelas_ids, true)) {
-    $kelas_id = '';
-}
 $search = $_GET['search'] ?? '';
+
+// Batas data:
+// - Admin & Wali Kelas : seluruh kelas (termasuk kelas lain)
+// - Guru biasa          : kelas yang diampu + catatan yang dicatat sendiri
+$is_guru_biasa = $role === 'Guru' && !$is_wali_kelas;
 
 // Rekap total poin per siswa. Kelas diutamakan dari penempatan (t_kelas_siswa),
 // fallback ke kelas saat pelanggaran dicatat (ps.kelas_id), karena penempatan bisa kosong.
@@ -18,9 +20,15 @@ if (!empty($kelas_id)) {
     $join_ps .= " AND ps.kelas_id = '$kelas_id'";
     $conds[] = "ps.kelas_id = '$kelas_id'";
 }
-if ($role === 'Guru') {
-    $join_ps .= " AND " . batas_kelas_guru('ps.kelas_id', $role, $wali_kelas_kelas_ids);
-    $conds[] = "EXISTS (SELECT 1 FROM t_kelas_siswa ksw WHERE ksw.siswa_id = s.id AND " . batas_kelas_guru('ksw.kelas_id', $role, $wali_kelas_kelas_ids) . ")";
+if ($is_guru_biasa) {
+    // Guru biasa: hanya catatan pelanggaran yang ia buat sendiri
+    if ($guru_id_login) {
+        $join_ps .= " AND ps.guru_id = " . (int)$guru_id_login;
+        $conds[] = "EXISTS (SELECT 1 FROM t_pelanggaran_siswa psx WHERE psx.siswa_id = s.id AND psx.guru_id = " . (int)$guru_id_login . ")";
+    } else {
+        $join_ps .= " AND 1 = 0";
+        $conds[] = "1 = 0";
+    }
 }
 if (!empty($search)) {
     $s = mysqli_real_escape_string($koneksi, $search);
@@ -30,10 +38,6 @@ $where = count($conds) > 0 ? "WHERE " . implode(' AND ', $conds) : "";
 
 $sub_ks = "SELECT k2.nama FROM t_kelas_siswa ks2 JOIN t_kelas k2 ON ks2.kelas_id = k2.id WHERE ks2.siswa_id = s.id";
 $sub_ps = "SELECT k3.nama FROM t_pelanggaran_siswa ps3 JOIN t_kelas k3 ON ps3.kelas_id = k3.id WHERE ps3.siswa_id = s.id";
-if ($role === 'Guru') {
-    $sub_ks .= " AND " . batas_kelas_guru('ks2.kelas_id', $role, $wali_kelas_kelas_ids);
-    $sub_ps .= " AND " . batas_kelas_guru('ps3.kelas_id', $role, $wali_kelas_kelas_ids);
-}
 
 $query = "SELECT s.id, s.nama AS nama_siswa,
                  COALESCE(
@@ -50,6 +54,9 @@ $query = "SELECT s.id, s.nama AS nama_siswa,
           ORDER BY total_poin DESC, s.nama ASC";
 
 $result = @mysqli_query($koneksi, $query);
+
+// Filter dropdown kelas: seluruh kelas (Admin, Guru & Wali Kelas)
+$kelas_rekap_list = @mysqli_query($koneksi, "SELECT id, nama FROM t_kelas ORDER BY nama ASC");
 
 // User yang membuka halaman (sesuai login di dashboard)
 $user_name = $_SESSION['name'] ?? $_SESSION['username'] ?? 'Pengguna';
@@ -85,18 +92,38 @@ $open_role = $_SESSION['role'] ?? 'Guru';
     <main class="flex-1 p-8 overflow-y-auto">
 
         <div class="max-w-5xl mx-auto mb-6 flex justify-between items-center no-print">
-            <a href="cetak_export.php" class="text-sm font-bold text-slate-600 hover:text-black">
-                <i class="fa-solid fa-arrow-left mr-1"></i> Kembali ke Cetak & Export
+            <a href="dashboard.php" class="text-sm font-bold text-slate-600 hover:text-black">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Kembali ke Dashboard
             </a>
             <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-lg text-sm shadow-sm transition flex items-center gap-2">
                 <i class="fa-solid fa-print"></i> Cetak Rekap Poin
             </button>
         </div>
 
-        <form method="GET" class="max-w-5xl mx-auto mb-4 flex gap-2 no-print">
-            <?php if (!empty($kelas_id)): ?>
-                <input type="hidden" name="kelas_id" value="<?php echo htmlspecialchars($kelas_id); ?>">
-            <?php endif; ?>
+        <?php if ($role === 'Guru'): ?>
+            <div class="max-w-5xl mx-auto mb-4 bg-blue-50 border border-blue-200 text-blue-800 text-sm font-bold rounded-[1.25rem] px-5 py-4 flex items-start gap-3 no-print">
+                <i class="fa-solid fa-circle-info mt-1"></i>
+                <span>
+                    <?php if ($is_wali_kelas): ?>
+                        Anda adalah <b>Wali Kelas</b> (<?php echo htmlspecialchars(implode(', ', $wali_kelas_kelas_nama)); ?>).
+                        Rekap ini menampilkan poin siswa dari <b>seluruh kelas</b>, termasuk kelas lain.
+                    <?php else: ?>
+                        Anda adalah <b>Guru</b>. Rekap ini menampilkan poin siswa dari
+                        <b>catatan pelanggaran yang Anda buat sendiri</b>.
+                    <?php endif; ?>
+                </span>
+            </div>
+        <?php endif; ?>
+
+        <form method="GET" class="max-w-5xl mx-auto mb-4 flex flex-wrap gap-2 items-center no-print">
+            <select name="kelas_id" class="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-600">
+                <option value="">-- Semua Kelas --</option>
+                <?php if ($kelas_rekap_list): while ($k = mysqli_fetch_assoc($kelas_rekap_list)): ?>
+                    <option value="<?php echo $k['id']; ?>" <?php echo $kelas_id == $k['id'] ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($k['nama']); ?>
+                    </option>
+                <?php endwhile; endif; ?>
+            </select>
             <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Cari Nama Siswa..." class="px-4 py-2 border border-slate-300 rounded-lg text-sm w-72 focus:outline-none focus:border-blue-600">
             <button type="submit" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-lg text-sm font-bold">Cari</button>
         </form>
@@ -139,11 +166,10 @@ $open_role = $_SESSION['role'] ?? 'Guru';
                                 <td class="border border-slate-300 px-4 py-2.5 text-center"><span class="px-2 py-1 rounded text-xs <?php echo $status_class; ?>"><?php echo $status_label; ?></span></td>
                             </tr>
                         <?php endwhile; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="5" class="border border-slate-300 px-4 py-8 text-center text-slate-500 font-bold">Tidak ada data siswa ditemukan untuk rekapitulasi poin.</td>
-                        </tr>
                     <?php endif; ?>
+                    <!-- Catatan: saat data kosong, tbody dibiarkan kosong (tanpa baris colspan)
+                         agar DataTables tidak memunculkan peringatan "Incorrect column count".
+                         Pesan "data kosong" ditampilkan oleh DataTables (opsi zeroRecords). -->
                 </tbody>
             </table>
 
@@ -176,7 +202,7 @@ $open_role = $_SESSION['role'] ?? 'Guru';
                 "order": [],                 // urutan tetap dari query (total poin terbesar di atas)
                 "language": {
                     "lengthMenu": "Tampilkan _MENU_ data",
-                    "zeroRecords": "Tidak ada data yang ditemukan",
+                    "zeroRecords": "Tidak ada data siswa ditemukan untuk rekapitulasi poin.",
                     "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
                     "infoEmpty": "Tidak ada data tersedia",
                     "paginate": { "first": "Pertama", "last": "Terakhir", "next": "Selanjutnya", "previous": "Sebelumnya" }
