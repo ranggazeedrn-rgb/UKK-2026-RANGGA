@@ -207,11 +207,11 @@ if ($result_riwayat) {
                 <div class="mb-5">
                     <label class="block text-xs font-bold text-slate-700 mb-2">Pilih Kelas (Filter Siswa)</label>
                     <select name="kelas_id" id="selectKelas" onchange="location.href='catatan_pelanggaran.php?kelas_id=' + this.value" class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
-                        <option value="">-- Semua Kelas --</option>
+                        <option value="">Semua Kelas</option>
                         <?php if ($kelas_list): while ($k = mysqli_fetch_assoc($kelas_list)): ?>
                             <option value="<?php echo $k['id']; ?>" <?php echo $selected_kelas == $k['id'] ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($k['nama']); ?>
-                                <?php if (in_array((int)$k['id'], $wali_kelas_kelas_ids, true)): ?> (Wali Kelas Anda)<?php endif; ?>
+                                <?php if (in_array((int)$k['id'], $wali_kelas_kelas_ids, true)): ?> [MURID KELAS ANDA] <?php endif; ?>
                             </option>
                         <?php endwhile; endif; ?>
                     </select>
