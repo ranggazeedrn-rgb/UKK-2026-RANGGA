@@ -19,38 +19,54 @@ if ($is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
 }
 
 // Scope data dashboard:
-// - Admin & Wali Kelas : seluruh kelas (wali kelas juga melihat kelas lain)
+// - Admin & Wali Kelas : seluruh kelas
 // - Guru biasa         : kelas yang diampu + catatan yang dicatat sendiri
 $boleh_semua_kelas = ($role === 'Admin') || ($role === 'Guru' && $is_wali_kelas);
 $guru_scope = $guru_id_login ? 'ps.guru_id = ' . (int)$guru_id_login : '1 = 0';
 $ids_kelas = implode(',', array_map('intval', $wali_kelas_kelas_ids));
 
 if ($boleh_semua_kelas) {
-    $query_siswa = mysqli_query($koneksi, "SELECT COUNT(DISTINCT s.id) as total FROM t_siswa s INNER JOIN t_kelas_siswa ks ON ks.siswa_id = s.id");
-    $query_pelanggaran = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa");
+    $total_siswa = (int)(mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(DISTINCT s.id) as total FROM t_siswa s INNER JOIN t_kelas_siswa ks ON ks.siswa_id = s.id"))['total'] ?? 0);
+    $total_pelanggaran = (int)(mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa"))['total'] ?? 0);
 } else {
-    $query_siswa = $ids_kelas === ''
+    $total_siswa = (int)(mysqli_fetch_assoc($ids_kelas === ''
         ? mysqli_query($koneksi, "SELECT COUNT(DISTINCT s.id) as total FROM t_siswa s INNER JOIN t_pelanggaran_siswa ps ON ps.siswa_id = s.id WHERE $guru_scope")
-        : mysqli_query($koneksi, "SELECT COUNT(DISTINCT s.id) as total FROM t_siswa s INNER JOIN t_kelas_siswa ks ON ks.siswa_id = s.id WHERE ks.kelas_id IN ($ids_kelas)");
-    $query_pelanggaran = $ids_kelas === ''
+        : mysqli_query($koneksi, "SELECT COUNT(DISTINCT s.id) as total FROM t_siswa s INNER JOIN t_kelas_siswa ks ON ks.siswa_id = s.id WHERE ks.kelas_id IN ($ids_kelas)")
+    )['total'] ?? 0);
+    $total_pelanggaran = (int)(mysqli_fetch_assoc($ids_kelas === ''
         ? mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa ps WHERE $guru_scope")
-        : mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa WHERE kelas_id IN ($ids_kelas)");
+        : mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa WHERE kelas_id IN ($ids_kelas)")
+    )['total'] ?? 0);
 }
-$total_siswa = mysqli_fetch_assoc($query_siswa)['total'] ?? 0;
 
-$query_guru = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_guru");
-$total_guru = mysqli_fetch_assoc($query_guru)['total'] ?? 0;
+$total_guru = (int)(mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_guru"))['total'] ?? 0);
+$total_kelas = (int)(mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_kelas"))['total'] ?? 0);
 
-$total_pelanggaran = mysqli_fetch_assoc($query_pelanggaran)['total'] ?? 0;
+// Daftar kelas sesuai scope dashboard
+if ($boleh_semua_kelas) {
+    $q_daftar_kelas = mysqli_query($koneksi, "SELECT nama FROM t_kelas ORDER BY nama ASC");
+} elseif ($ids_kelas !== '') {
+    $q_daftar_kelas = mysqli_query($koneksi, "SELECT nama FROM t_kelas WHERE id IN ($ids_kelas) ORDER BY nama ASC");
+} else {
+    $q_daftar_kelas = false;
+}
 
-$query_kelas = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_kelas");
-$total_kelas = mysqli_fetch_assoc($query_kelas)['total'] ?? 0;
+// Kelas dari catatan pelanggaran Guru biasa
+$guru_kelas = [];
+if ($role === 'Guru' && !$is_wali_kelas && $guru_id_login) {
+    $q_guru_kelas = mysqli_query($koneksi, "
+        SELECT DISTINCT k.nama 
+        FROM t_pelanggaran_siswa ps 
+        INNER JOIN t_kelas k ON ps.kelas_id = k.id 
+        WHERE ps.guru_id = " . (int)$guru_id_login . " 
+        ORDER BY k.nama ASC
+    ");
+    while ($q_guru_kelas && $k = mysqli_fetch_assoc($q_guru_kelas)) {
+        $guru_kelas[] = $k['nama'];
+    }
+}
 
-// Tahun ajaran aktif (dipakai juga sebagai pilihan default pada semua
-// kolom "Pilih Tahun Ajaran" di seluruh aplikasi)
-$ta_aktif = tahun_ajaran_aktif($koneksi);
-$nama_ta_aktif = nama_tahun_ajaran($ta_aktif);
-
+// Scope pelanggaran terbaru
 if ($boleh_semua_kelas) {
     $where_recent = '';
 } elseif ($ids_kelas !== '') {
@@ -60,11 +76,7 @@ if ($boleh_semua_kelas) {
 }
 
 $query_recent = mysqli_query($koneksi, "
-    SELECT
-        ps.tanggal,
-        ps.poin,
-        s.nama AS nama_siswa,
-        k.nama AS nama_kelas
+    SELECT ps.tanggal, ps.poin, s.nama AS nama_siswa, k.nama AS nama_kelas
     FROM t_pelanggaran_siswa ps
     LEFT JOIN t_siswa s ON ps.siswa_id = s.id
     LEFT JOIN t_kelas k ON ps.kelas_id = k.id
@@ -102,20 +114,8 @@ $query_recent = mysqli_query($koneksi, "
                 </div>
             <?php endif; ?>
 
-            <!-- Info untuk Guru yang belum menjadi Wali Kelas -->
-            <?php if ($role === 'Guru' && !$is_wali_kelas): ?>
-            <div class="bg-amber-50 border border-amber-200 text-amber-800 text-sm font-bold rounded-[1.5rem] px-6 py-4 mb-6 flex items-start gap-3">
-                <i class="fa-solid fa-circle-info mt-1"></i>
-                <span>
-                    Anda adalah <b>Guru</b> (belum ditunjuk sebagai Wali Kelas).
-                    Anda tetap dapat mencatat pelanggaran serta memperbarui <b>tindakan</b>.
-                    Halaman <b>Laporan</b> hanya dapat diakses oleh Admin dan Guru yang ditunjuk sebagai <b>Wali Kelas</b>.
-                </span>
-            </div>
-            <?php endif; ?>
-
             <!-- Stats Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <div class="bg-slate-100 p-6 rounded-2xl flex items-center gap-4">
                     <i class="fa-solid fa-user text-4xl text-blue-600"></i>
                     <div>
@@ -133,17 +133,6 @@ $query_recent = mysqli_query($koneksi, "
                 </div>
 
                 <div class="bg-slate-100 p-6 rounded-2xl flex items-center gap-4">
-                    <i class="fa-solid fa-triangle-exclamation text-4xl text-blue-600"></i>
-                    <div>
-                        <h3 class="text-sm font-bold text-black uppercase tracking-wider">Pelanggaran</h3>
-                        <p class="text-2xl font-bold text-blue-600"><?php echo $total_pelanggaran; ?></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stats Grid Tambahan -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-slate-100 p-6 rounded-2xl flex items-center gap-4">
                     <i class="fa-solid fa-user-tie text-4xl text-blue-600"></i>
                     <div>
                         <h3 class="text-sm font-bold text-black uppercase tracking-wider">Guru</h3>
@@ -158,16 +147,26 @@ $query_recent = mysqli_query($koneksi, "
                         <p class="text-2xl font-bold text-blue-600"><?php echo $total_kelas; ?></p>
                     </div>
                 </div>
+            </div>
 
-                <div class="bg-slate-100 p-6 rounded-2xl flex items-center gap-4">
-                    <i class="fa-solid fa-calendar-days text-4xl text-blue-600"></i>
+            <!-- Daftar Kelas -->
+            <?php if ($q_daftar_kelas && mysqli_num_rows($q_daftar_kelas) > 0): ?>
+            <div class="bg-slate-100 p-6 rounded-[1.5rem] mb-8">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="fa-solid fa-chalkboard text-xl text-blue-600"></i>
                     <div>
-                        <h3 class="text-sm font-bold text-black uppercase tracking-wider">Tahun Ajaran Aktif</h3>
-                        <p class="text-2xl font-bold text-blue-600"><?php echo htmlspecialchars($nama_ta_aktif); ?></p>
-                        <p class="text-[11px] font-bold text-slate-400"><?php echo $ta_aktif ? 'Otomatis dipilih pada kolom tahun ajaran' : 'Belum ada tahun ajaran aktif'; ?></p>
+                        <h3 class="text-sm font-bold text-black uppercase tracking-wider">Daftar Kelas</h3>
                     </div>
                 </div>
+                <div class="flex flex-wrap gap-2">
+                    <?php while ($k_dk = mysqli_fetch_assoc($q_daftar_kelas)): ?>
+                        <span class="bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-sm font-bold text-slate-600">
+                            <?php echo htmlspecialchars($k_dk['nama']); ?>
+                        </span>
+                    <?php endwhile; ?>
+                </div>
             </div>
+            <?php endif; ?>
 
             <!-- Kelas yang Diampu (Wali Kelas) -->
             <?php if ($is_wali_kelas): ?>
@@ -188,7 +187,27 @@ $query_recent = mysqli_query($koneksi, "
                 </div>
             </div>
             <?php endif; ?>
-
+ 
+            <!-- Kelas dari Catatan Pelanggaran (Guru Biasa) -->
+            <?php if ($role === 'Guru' && !$is_wali_kelas && !empty($guru_kelas)): ?>
+            <div class="bg-green-50 border border-green-200 p-6 rounded-[1.5rem] mb-8">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="fa-solid fa-chalkboard text-xl text-green-600"></i>
+                    <div>
+                        <h3 class="text-sm font-bold text-black uppercase tracking-wider">Kelas pada Catatan Pelanggaran</h3>
+                        <p class="text-xs font-bold text-slate-500">Kelas yang memiliki catatan pelanggaran dari Anda.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <?php foreach ($guru_kelas as $nama_kelas): ?>
+                        <span class="bg-white border border-green-200 px-4 py-2 rounded-xl text-sm font-bold text-green-600 shadow-sm">
+                            <i class="fa-solid fa-school mr-1"></i> <?php echo htmlspecialchars($nama_kelas); ?>
+                        </span>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+ 
             <!-- Table -->
             <div class="bg-slate-100 p-6 rounded-[1.5rem]">
                 <div class="overflow-x-auto">

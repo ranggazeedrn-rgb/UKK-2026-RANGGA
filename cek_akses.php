@@ -74,39 +74,36 @@ if ($current_file === 'index.php') {
 }
 
 // 7. Hak akses per halaman: kunci = nama file, nilai = role yang boleh mengakses
-//    Admin: seluruh fitur. Guru: Catat Pelanggaran, Tindakan, Riwayat, Rekap, Laporan, Dashboard.
-//    Wali Kelas mewarisi seluruh hak akses Guru.
+//    Admin: seluruh fitur. Guru: Dashboard, Catat Pelanggaran, Tindakan, Rekap Poin (+ edit_tindakan).
+//    Wali Kelas mewarisi hak akses Guru ditambah Laporan dan Riwayat.
 $akses_halaman = [
-    // Catat Pelanggaran: hanya Guru (Admin ditolak oleh validasi di bawah)
     'catatan_pelanggaran.php' => ['Guru'],
     'riwayat.php'             => ['Admin', 'Guru'],
     'rekap_point.php'         => ['Admin', 'Guru'],
     'edit_tindakan.php'       => ['Admin', 'Guru'],
     'tindakan.php'            => ['Admin', 'Guru'],
-    // Laporan: Admin & Guru (guru non-wali kelas ditolak oleh validasi bagian 8)
     'laporan.php'             => ['Admin', 'Guru'],
     'dashboard.php'           => ['Admin', 'Guru'],
-    // Data Master, Plotting, Cetak/Export, About Me (khusus Admin)
-    'kelola_siswa.php' => ['Admin'],
-    'tambah_siswa.php' => ['Admin'],
-    'edit_siswa.php' => ['Admin'],
-    'kelola_guru.php' => ['Admin'],
-    'tambah_guru.php' => ['Admin'],
-    'edit_guru.php' => ['Admin'],
-    'kelola_kelas.php' => ['Admin'],
-    'tambah_kelas.php' => ['Admin'],
-    'edit_kelas.php' => ['Admin'],
+    'kelola_siswa.php'        => ['Admin'],
+    'tambah_siswa.php'        => ['Admin'],
+    'edit_siswa.php'          => ['Admin'],
+    'kelola_guru.php'         => ['Admin'],
+    'tambah_guru.php'         => ['Admin'],
+    'edit_guru.php'           => ['Admin'],
+    'kelola_kelas.php'        => ['Admin'],
+    'tambah_kelas.php'        => ['Admin'],
+    'edit_kelas.php'          => ['Admin'],
     'kelola_tahun_ajaran.php' => ['Admin'],
     'tambah_tahun_ajaran.php' => ['Admin'],
-    'edit_tahun_ajaran.php' => ['Admin'],
-    'tambah_user.php' => ['Admin'],
-    'kelola_user.php' => ['Admin'],
-    'penempatan_siswa.php' => ['Admin'],
-    'walikelas.php' => ['Admin'],
+    'edit_tahun_ajaran.php'   => ['Admin'],
+    'tambah_user.php'         => ['Admin'],
+    'kelola_user.php'         => ['Admin'],
+    'penempatan_siswa.php'    => ['Admin'],
+    'walikelas.php'           => ['Admin'],
     'kelola_jenis_pelanggaran.php' => ['Admin'],
     'kelola_kategori_pelanggaran.php' => ['Admin'],
-    'cetak_export.php' => ['Admin'],
-    'aboutme.php' => ['Admin']
+    'cetak_export.php'        => ['Admin'],
+    'aboutme.php'             => ['Admin']
 ];
 
 // Validasi akses halaman
@@ -119,9 +116,10 @@ if (array_key_exists($current_file, $akses_halaman) && !in_array($role, $akses_h
     exit;
 }
 
-// 8. Halaman khusus Wali Kelas: selain Admin, hanya Guru yang ditunjuk
-//    sebagai Wali Kelas (status_aktif = 1 pada t_wali_kelas) yang boleh membuka.
-if (in_array($current_file, ['laporan.php'], true) && $role === 'Guru' && !$is_wali_kelas) {
+// 8. Halaman khusus Admin & Wali Kelas: Guru biasa (non-wali kelas) hanya boleh
+//    mengakses Dashboard, Catat Pelanggaran, Tindakan, dan Rekap Poin.
+//    Laporan & Riwayat dibatasi untuk Admin & Wali Kelas.
+if (in_array($current_file, ['laporan.php', 'riwayat.php'], true) && $role === 'Guru' && !$is_wali_kelas) {
     $_SESSION['flash'] = [
         'type' => 'danger',
         'message' => 'Akses ditolak. Halaman ini hanya dapat diakses oleh Guru yang ditunjuk sebagai Wali Kelas.'
@@ -202,6 +200,25 @@ if (!function_exists('nama_tahun_ajaran')) {
             $nama .= ' (' . ucfirst($semester) . ')';
         }
         return $nama;
+    }
+}
+
+if (!function_exists('tahun_ajaran_pilihan')) {
+    function tahun_ajaran_pilihan($koneksi)
+    {
+        return mysqli_query($koneksi, "SELECT id, nama, semester FROM t_tahun_ajaran ORDER BY id DESC");
+    }
+}
+
+// 13. Validasi format tanggal Y-m-d
+if (!function_exists('valid_tanggal_filter')) {
+    function valid_tanggal_filter($tanggal)
+    {
+        if (!is_string($tanggal) || $tanggal === '') {
+            return '';
+        }
+        $d = DateTime::createFromFormat('Y-m-d', $tanggal);
+        return ($d && $d->format('Y-m-d') === $tanggal) ? $tanggal : '';
     }
 }
 ?>

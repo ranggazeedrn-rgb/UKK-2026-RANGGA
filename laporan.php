@@ -3,11 +3,7 @@ session_start();
 include 'config/koneksi.php';
 include 'cek_akses.php';
 
-// Halaman Laporan hanya dapat diakses oleh Admin dan Guru yang ditunjuk sebagai
-// Wali Kelas. Guru yang BUKAN wali kelas sudah diblokir langsung oleh cek_akses.php
-// (bagian 7b) dan diarahkan kembali ke dashboard, sehingga tidak pernah sampai ke sini.
-
-// Tahun ajaran aktif otomatis terpilih pada kolom "Pilih Tahun Ajaran"
+// Tahun ajaran aktif otomatis terpilih
 $ta_aktif_id = tahun_ajaran_aktif_id($koneksi);
 
 $tahun_ajaran_id = isset($_GET['tahun_ajaran_id']) ? (int)$_GET['tahun_ajaran_id'] : $ta_aktif_id;
@@ -15,15 +11,6 @@ $kelas_id       = isset($_GET['kelas_id']) ? (int)$_GET['kelas_id'] : '';
 $export         = isset($_GET['export']) ? $_GET['export'] : 'preview';
 $export         = in_array($export, ['pdf', 'excel'], true) ? $export : 'preview';
 
-// Filter tanggal: hanya format Y-m-d yang valid dipakai (validasi input user)
-function valid_tanggal_filter($tanggal)
-{
-    if (!is_string($tanggal) || $tanggal === '') {
-        return '';
-    }
-    $d = DateTime::createFromFormat('Y-m-d', $tanggal);
-    return ($d && $d->format('Y-m-d') === $tanggal) ? $tanggal : '';
-}
 $tanggal_dari   = valid_tanggal_filter($_GET['tanggal_dari'] ?? '');
 $tanggal_sampai = valid_tanggal_filter($_GET['tanggal_sampai'] ?? '');
 
@@ -65,8 +52,14 @@ $query = "SELECT ps.id, ps.siswa_id, ps.nama_siswa AS nama_siswa_ps, ps.kelas_id
 $result = @mysqli_query($koneksi, $query);
 $total_data = $result ? mysqli_num_rows($result) : 0;
 
-// Filter dropdown: seluruh kelas (wali kelas boleh melihat kelas lain)
-$kelas_list = @mysqli_query($koneksi, "SELECT id, nama FROM t_kelas ORDER BY nama ASC");
+// Filter dropdown: Admin melihat seluruh kelas, Wali Kelas hanya kelas yang diwalikan
+if ($role === 'Admin') {
+    $kelas_list = @mysqli_query($koneksi, "SELECT id, nama FROM t_kelas ORDER BY nama ASC");
+} else {
+    // Wali Kelas: hanya kelas yang diwalikan
+    $ids_wk = implode(',', array_map('intval', $wali_kelas_kelas_ids));
+    $kelas_list = @mysqli_query($koneksi, "SELECT id, nama FROM t_kelas WHERE id IN ($ids_wk) ORDER BY nama ASC");
+}
 $ta_list    = tahun_ajaran_pilihan($koneksi);
 
 if ($export === 'excel') {
@@ -127,11 +120,10 @@ if ($export === 'excel') {
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">KELAS</label>
                     <select name="kelas_id" class="w-full border border-slate-300 px-3 py-2 rounded-lg text-sm focus:border-blue-600 focus:outline-none">
-                        <option value="">-- Semua Kelas --</option>
+                        <option value=""><?php echo $role === 'Admin' ? '-- Semua Kelas --' : '-- Semua Kelas yang Diwalikan --'; ?></option>
                         <?php if ($kelas_list): while ($k = mysqli_fetch_assoc($kelas_list)): ?>
                             <option value="<?php echo $k['id']; ?>" <?php echo $kelas_id == $k['id'] ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($k['nama']); ?>
-                                <?php if (in_array((int)$k['id'], $wali_kelas_kelas_ids, true)): ?> (Wali Kelas Anda)<?php endif; ?>
                             </option>
                         <?php endwhile; endif; ?>
                     </select>
@@ -148,7 +140,14 @@ if ($export === 'excel') {
                     <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-sm shadow-sm transition">
                         <i class="fa-solid fa-filter mr-1"></i> Tampilkan
                     </button>
-                    <a href="laporan.php?export=excel<?php echo !empty($tahun_ajaran_id) ? '&tahun_ajaran_id=' . (int)$tahun_ajaran_id : ''; ?><?php echo !empty($kelas_id) ? '&kelas_id=' . (int)$kelas_id : ''; ?><?php echo $tanggal_dari !== '' ? '&tanggal_dari=' . $tanggal_dari : ''; ?><?php echo $tanggal_sampai !== '' ? '&tanggal_sampai=' . $tanggal_sampai : ''; ?>" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded-lg text-sm shadow-sm transition text-center">
+                    <?php
+                    $excel_url = 'laporan.php?export=excel';
+                    if (!empty($tahun_ajaran_id)) $excel_url .= '&tahun_ajaran_id=' . (int)$tahun_ajaran_id;
+                    if (!empty($kelas_id)) $excel_url .= '&kelas_id=' . (int)$kelas_id;
+                    if ($tanggal_dari !== '') $excel_url .= '&tanggal_dari=' . $tanggal_dari;
+                    if ($tanggal_sampai !== '') $excel_url .= '&tanggal_sampai=' . $tanggal_sampai;
+                    ?>
+                    <a href="<?php echo $excel_url; ?>" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded-lg text-sm shadow-sm transition text-center">
                         <i class="fa-solid fa-file-excel mr-1"></i> Excel
                     </a>
                 </div>
@@ -175,21 +174,17 @@ if ($export === 'excel') {
                     <?php
                     $filter_info = [];
                     if (!empty($kelas_id)) {
-                        $q_nama_kelas = @mysqli_query($koneksi, "SELECT nama FROM t_kelas WHERE id = '" . (int)$kelas_id . "' LIMIT 1");
-                        $r_nama_kelas = $q_nama_kelas ? mysqli_fetch_assoc($q_nama_kelas) : null;
-                        $filter_info[] = 'Kelas: ' . ($r_nama_kelas['nama'] ?? '-');
+                        $filter_info[] = 'Kelas: ' . $kelas_id;
                     }
                     if (!empty($tahun_ajaran_id)) {
-                        $q_nama_ta = @mysqli_query($koneksi, "SELECT nama FROM t_tahun_ajaran WHERE id = '" . (int)$tahun_ajaran_id . "' LIMIT 1");
-                        $r_nama_ta = $q_nama_ta ? mysqli_fetch_assoc($q_nama_ta) : null;
-                        $filter_info[] = 'Tahun Ajaran: ' . ($r_nama_ta['nama'] ?? '-');
+                        $filter_info[] = 'TA: ' . $tahun_ajaran_id;
                     }
                     if ($tanggal_dari !== '' || $tanggal_sampai !== '') {
-                        $filter_info[] = 'Tanggal: ' . ($tanggal_dari !== '' ? date('d/m/Y', strtotime($tanggal_dari)) : 'awal') . ' - ' . ($tanggal_sampai !== '' ? date('d/m/Y', strtotime($tanggal_sampai)) : 'akhir');
+                        $filter_info[] = 'Tgl: ' . ($tanggal_dari !== '' ? date('d/m/Y', strtotime($tanggal_dari)) : 'awal') . ' - ' . ($tanggal_sampai !== '' ? date('d/m/Y', strtotime($tanggal_sampai)) : 'akhir');
                     }
                     echo htmlspecialchars(implode(' | ', $filter_info));
                     ?>
-                    <span class="text-slate-400">•</span> Total Data: <?php echo $total_data; ?>
+                    <span class="text-slate-400">•</span> Total: <?php echo $total_data; ?>
                 </p>
             <?php endif; ?>
         </div>

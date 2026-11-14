@@ -1,7 +1,7 @@
 <!-- layouts/sidebar.php -->
 <?php
 $current_page = basename($_SERVER['PHP_SELF']);
-$role = $_SESSION['role'] ?? '';
+$role = $role ?? (strtolower(trim($_SESSION['role'] ?? $_SESSION['level'] ?? '')) === 'admin' ? 'Admin' : 'Guru');
 $active = fn($file) => $current_page === $file ? 'text-blue-600 bg-blue-50 rounded-lg' : '';
 ?>
 <aside class="w-64 bg-slate-100 flex flex-col hidden md:flex shrink-0 border-r border-slate-200">
@@ -71,24 +71,22 @@ $active = fn($file) => $current_page === $file ? 'text-blue-600 bg-blue-50 round
         <a href="catatan_pelanggaran.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('catatan_pelanggaran.php'); ?>">
             <i class="fa-solid fa-clipboard-user text-lg w-5 text-center"></i> Catat Pelanggaran
         </a>
-        <?php endif; ?>
+        <a href="tindakan.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('tindakan.php'); ?>">
+            <i class="fa-solid fa-gavel text-lg w-5 text-center"></i> Tindakan
+        </a>
         <a href="rekap_point.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('rekap_point.php'); ?>">
             <i class="fa-solid fa-calculator text-lg w-5 text-center"></i> Rekap Poin
         </a>
- 
-        <?php if ($role === 'Admin' || !empty($is_wali_kelas)): ?>
         <a href="laporan.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('laporan.php'); ?>">
             <i class="fa-solid fa-file-contract text-lg w-5 text-center"></i> Laporan
         </a>
         <?php endif; ?>
-        <?php if ($role !== 'Admin'): ?>
-        <a href="tindakan.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('tindakan.php'); ?>">
-            <i class="fa-solid fa-gavel text-lg w-5 text-center"></i> Tindakan
-        </a>
-        <?php endif; ?>
+ 
+        <?php if ($role === 'Admin'): ?>
         <a href="riwayat.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('riwayat.php'); ?>">
             <i class="fa-solid fa-clock-rotate-left text-lg w-5 text-center"></i> Riwayat
         </a>
+        <?php endif; ?>
  
         <?php if ($role === 'Admin'): ?>
         <!-- Menu About Me (khusus Admin) -->
