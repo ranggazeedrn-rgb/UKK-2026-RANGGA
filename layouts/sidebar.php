@@ -28,6 +28,9 @@ $active = fn($file) => $current_page === $file ? 'text-blue-600 bg-blue-50 round
             <a href="tambah_user.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('tambah_user.php'); ?>">
                 <i class="fa-solid fa-user-plus text-lg w-5 text-center"></i> Tambah User
             </a>
+            <a href="kelola_user.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('kelola_user.php'); ?>">
+                <i class="fa-solid fa-users-gear text-lg w-5 text-center"></i> Kelola User
+            </a>
             <a href="kelola_kelas.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('kelola_kelas.php'); ?>">
                 <i class="fa-solid fa-school text-lg w-5 text-center"></i> Kelola Kelas
             </a>
@@ -64,16 +67,20 @@ $active = fn($file) => $current_page === $file ? 'text-blue-600 bg-blue-50 round
             <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Aktivitas</p>
         </div>
  
+        <?php if (strtolower($role) !== 'admin'): ?>
         <a href="catatan_pelanggaran.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('catatan_pelanggaran.php'); ?>">
             <i class="fa-solid fa-clipboard-user text-lg w-5 text-center"></i> Catat Pelanggaran
         </a>
+        <?php endif; ?>
         <a href="rekap_point.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('rekap_point.php'); ?>">
             <i class="fa-solid fa-calculator text-lg w-5 text-center"></i> Rekap Poin
         </a>
  
+        <?php if ($role === 'Admin' || !empty($is_wali_kelas)): ?>
         <a href="laporan.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('laporan.php'); ?>">
             <i class="fa-solid fa-file-contract text-lg w-5 text-center"></i> Laporan
         </a>
+        <?php endif; ?>
         <?php if ($role !== 'Admin'): ?>
         <a href="tindakan.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('tindakan.php'); ?>">
             <i class="fa-solid fa-gavel text-lg w-5 text-center"></i> Tindakan

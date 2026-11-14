@@ -185,8 +185,7 @@ if ($result_riwayat) {
             <div class="max-w-2xl mx-auto mb-6 bg-blue-50 border border-blue-200 text-blue-800 text-sm font-bold rounded-[1.25rem] px-5 py-4 flex items-start gap-3">
                 <i class="fa-solid fa-circle-info mt-1"></i>
                 <span>
-                    Anda mengakses halaman ini sebagai <b>Guru</b><?php if ($is_wali_kelas): ?>
-                    / <b>Wali Kelas</b> (<?php echo htmlspecialchars(implode(', ', $wali_kelas_kelas_nama)); ?>)<?php endif; ?>.
+                    Anda mengakses halaman ini sebagai <b><?php echo $is_wali_kelas ? 'Wali Kelas (' . htmlspecialchars(implode(', ', $wali_kelas_kelas_nama)) . ')' : 'Guru'; ?></b>.
                     Anda dapat memilih kelas <b>manapun</b> dan melaporkan pelanggaran siswa dari kelas lain.
                 </span>
             </div>

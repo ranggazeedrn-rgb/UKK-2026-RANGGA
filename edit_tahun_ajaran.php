@@ -24,10 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tanggal_selesai = mysqli_real_escape_string($koneksi, $_POST['tanggal_selesai']);
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
 
+    // Tahun ajaran aktif maksimal 3 (di luar data yang sedang diedit)
     if ($status_aktif == 1) {
-        $cek_aktif = mysqli_query($koneksi, "SELECT id FROM t_tahun_ajaran WHERE status_aktif = 1 AND id <> '$id' LIMIT 1");
-        if ($cek_aktif && mysqli_num_rows($cek_aktif) > 0) {
-            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: sudah ada tahun ajaran aktif. Non-aktifkan yang lain terlebih dahulu.'];
+        $cek_aktif = mysqli_query($koneksi, "SELECT COUNT(*) AS jml FROM t_tahun_ajaran WHERE status_aktif = 1 AND id <> '$id'");
+        $jml_aktif = $cek_aktif ? (int)mysqli_fetch_assoc($cek_aktif)['jml'] : 0;
+        if ($jml_aktif >= 3) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal update: tahun ajaran aktif maksimal 3!'];
             header("Location: kelola_tahun_ajaran.php");
             exit();
         }

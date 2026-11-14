@@ -3,9 +3,15 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Cegah cache browser: setelah logout, tombol mundur wajib meminta ulang ke server
+// sehingga pengecekan login di bawah tetap berlaku (bukan salinan cache).
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+header("Expires: Thu, 01 Jan 1970 00:00:00 GMT");
+
 $current_file = basename($_SERVER['PHP_SELF']);
 
-// 1. Pengecekan Login (Memeriksa semua variabel session yang mungkin diset saat login)
+// 1. Cek login
 $is_logged_in = isset($_SESSION['user_id']) || isset($_SESSION['login']) || isset($_SESSION['loggedin']);
 
 if ($current_file === 'login.php') {
@@ -21,43 +27,33 @@ if (!$is_logged_in) {
     exit;
 }
 
-// 2. Normalisasi Role (hanya Admin & Guru, wali kelas ditentukan lewat penetapan)
-$raw_role = $_SESSION['role'] ?? $_SESSION['level'] ?? '';
-$role_lower = strtolower(trim($raw_role));
+// 2. Normalisasi role (wali kelas ditentukan lewat penetapan, bukan role)
+$role = strtolower(trim($_SESSION['role'] ?? $_SESSION['level'] ?? '')) === 'admin' ? 'Admin' : 'Guru';
 
-if ($role_lower === 'admin') {
-    $role = 'Admin';
-} else {
-    $role = 'Guru';
-}
-
-// 3. Status Wali Kelas ditentukan oleh penetapan di t_wali_kelas, bukan role
-$is_wali_kelas = false;
+// 3. Status wali kelas dari t_wali_kelas: session user -> t_guru.user_id -> wk.guru_id
 $wali_kelas_kelas_ids = [];
 $wali_kelas_kelas_nama = [];
-
 if ($role === 'Guru' && isset($_SESSION['user_id']) && isset($koneksi)) {
-    $uid = (int)$_SESSION['user_id'];
     $q_wali_kelas = @mysqli_query($koneksi, "
         SELECT wk.kelas_id, k.nama AS nama_kelas
         FROM t_wali_kelas wk
         INNER JOIN t_guru g ON wk.guru_id = g.id
         LEFT JOIN t_kelas k ON wk.kelas_id = k.id
-        WHERE g.user_id = '$uid' AND wk.status_aktif = 1
+        WHERE g.user_id = '" . (int)$_SESSION['user_id'] . "' AND wk.status_aktif = 1
     ");
-    if ($q_wali_kelas) {
-        while ($wk = mysqli_fetch_assoc($q_wali_kelas)) {
-            $wali_kelas_kelas_ids[] = (int)$wk['kelas_id'];
-            if (!empty($wk['nama_kelas'])) {
-                $wali_kelas_kelas_nama[] = $wk['nama_kelas'];
-            }
+    while ($q_wali_kelas && $wk = mysqli_fetch_assoc($q_wali_kelas)) {
+        $wali_kelas_kelas_ids[] = (int)$wk['kelas_id'];
+        if (!empty($wk['nama_kelas'])) {
+            $wali_kelas_kelas_nama[] = $wk['nama_kelas'];
         }
-        $is_wali_kelas = count($wali_kelas_kelas_ids) > 0;
     }
 }
+$is_wali_kelas = count($wali_kelas_kelas_ids) > 0;
 
-// 4. Data guru (t_guru) milik user yang sedang login
-//    Dipakai untuk mencatat siapa pelapor pelanggaran (nama_guru / guru_id).
+// 4. Label tampilan: guru yang ditunjuk wali kelas ditampilkan sebagai "Wali Kelas"
+$role_tampil = $is_wali_kelas ? 'Wali Kelas' : $role;
+
+// 5. Data guru milik user login (dipakai sebagai pencatat pelanggaran)
 $guru_id_login = null;
 $guru_nama_login = '';
 if (isset($_SESSION['user_id']) && isset($koneksi)) {
@@ -71,29 +67,26 @@ if (isset($_SESSION['user_id']) && isset($koneksi)) {
     }
 }
 
-// 5. Pengalihan dari index.php
+// 6. Pengalihan index.php
 if ($current_file === 'index.php') {
     header("Location: dashboard.php");
     exit;
 }
 
-// 6. Hak Akses
-//    Mengikuti use case diagram (ROLE.jpg):
-//    - Admin    : seluruh fitur (Data Master, Plotting, Aktivitas, Laporan, Cetak/Export)
-//    - Guru     : Catatan Pelanggaran, Tindakan, Riwayat, Rekap Poin, Laporan, Dashboard
-//    - Wali Kelas : mewarisi seluruh hak akses Guru
+// 7. Hak akses per halaman: kunci = nama file, nilai = role yang boleh mengakses
+//    Admin: seluruh fitur. Guru: Catat Pelanggaran, Tindakan, Riwayat, Rekap, Laporan, Dashboard.
+//    Wali Kelas mewarisi seluruh hak akses Guru.
 $akses_halaman = [
-    // Aktivitas: dapat diakses oleh Admin, Guru, dan Wali Kelas
-    'catatan_pelanggaran.php' => ['Admin', 'Guru'],
+    // Catat Pelanggaran: hanya Guru (Admin ditolak oleh validasi di bawah)
+    'catatan_pelanggaran.php' => ['Guru'],
     'riwayat.php'             => ['Admin', 'Guru'],
     'rekap_point.php'         => ['Admin', 'Guru'],
     'edit_tindakan.php'       => ['Admin', 'Guru'],
     'tindakan.php'            => ['Admin', 'Guru'],
-    // Laporan: Admin & Wali Kelas (Guru biasa dibatasi oleh isi data laporan)
+    // Laporan: Admin & Guru (guru non-wali kelas ditolak oleh validasi bagian 8)
     'laporan.php'             => ['Admin', 'Guru'],
-    // Dashboard untuk semua role
     'dashboard.php'           => ['Admin', 'Guru'],
-    // Data Master (khusus Admin)
+    // Data Master, Plotting, Cetak/Export, About Me (khusus Admin)
     'kelola_siswa.php' => ['Admin'],
     'tambah_siswa.php' => ['Admin'],
     'edit_siswa.php' => ['Admin'],
@@ -107,41 +100,38 @@ $akses_halaman = [
     'tambah_tahun_ajaran.php' => ['Admin'],
     'edit_tahun_ajaran.php' => ['Admin'],
     'tambah_user.php' => ['Admin'],
+    'kelola_user.php' => ['Admin'],
     'penempatan_siswa.php' => ['Admin'],
     'walikelas.php' => ['Admin'],
     'kelola_jenis_pelanggaran.php' => ['Admin'],
     'kelola_kategori_pelanggaran.php' => ['Admin'],
-    // Cetak / Export (khusus Admin)
     'cetak_export.php' => ['Admin'],
-    // About Me (khusus Admin)
     'aboutme.php' => ['Admin']
 ];
 
-// 7. Validasi Akses Halaman
-if (array_key_exists($current_file, $akses_halaman)) {
-    if (!in_array($role, $akses_halaman[$current_file])) {
-        if ($current_file !== 'dashboard.php') {
-            $_SESSION['flash'] = [
-                'type' => 'danger',
-                'message' => 'Akses ditolak. Halaman ini hanya dapat diakses oleh ' . implode(' / ', $akses_halaman[$current_file]) . '.'
-            ];
-            header("Location: dashboard.php");
-            exit;
-        }
-    }
+// Validasi akses halaman
+if (array_key_exists($current_file, $akses_halaman) && !in_array($role, $akses_halaman[$current_file])) {
+    $_SESSION['flash'] = [
+        'type' => 'danger',
+        'message' => 'Akses ditolak. Halaman ini hanya dapat diakses oleh ' . implode(' / ', $akses_halaman[$current_file]) . '.'
+    ];
+    header("Location: dashboard.php");
+    exit;
 }
 
-// 8. Halaman Laporan untuk role Guru
-//    Halaman tetap dapat dibuka oleh Guru (Guru biasa maupun Wali Kelas).
-//    Pembatasan hanya berlaku pada ISI data laporan (lihat laporan.php):
-//    isi laporan hanya ditampilkan bagi Wali Kelas.
-//    (Catatan, Tindakan, Laporan, Riwayat, Rekap Poin = hak akses Admin, Guru & Wali Kelas)
+// 8. Halaman khusus Wali Kelas: selain Admin, hanya Guru yang ditunjuk
+//    sebagai Wali Kelas (status_aktif = 1 pada t_wali_kelas) yang boleh membuka.
+if (in_array($current_file, ['laporan.php'], true) && $role === 'Guru' && !$is_wali_kelas) {
+    $_SESSION['flash'] = [
+        'type' => 'danger',
+        'message' => 'Akses ditolak. Halaman ini hanya dapat diakses oleh Guru yang ditunjuk sebagai Wali Kelas.'
+    ];
+    header("Location: dashboard.php");
+    exit;
+}
 
-// 9. Scope data laporan/riwayat/rekap poin
-//     - Admin      : seluruh kelas
-//     - Wali Kelas : seluruh kelas (boleh melihat kelas lain beserta
-//                    pelanggaran yang dilakukan siswa kelas lain)
-//     - Guru biasa : hanya kelas yang diampu (biasanya tidak ada kelas)
+// 9. Scope data laporan: Admin seluruh kelas, Wali Kelas hanya siswa kelasnya,
+//    Guru biasa tidak ada data. Mengembalikan string kondisi SQL (alias tabel: ps).
 if (!function_exists('scope_kelas_laporan')) {
     function scope_kelas_laporan($role, array $kelas_ids)
     {
@@ -149,17 +139,16 @@ if (!function_exists('scope_kelas_laporan')) {
             return '1 = 1';
         }
         if (count($kelas_ids) > 0) {
-            // Wali kelas: bebas melihat kelas lain
-            return '1 = 1';
+            // ps.kelas_id bisa kosong; fallback ke penempatan terakhir di t_kelas_siswa
+            $ids = implode(',', array_map('intval', $kelas_ids));
+            return "COALESCE(ps.kelas_id, (SELECT ks.kelas_id FROM t_kelas_siswa ks WHERE ks.siswa_id = ps.siswa_id ORDER BY ks.id DESC LIMIT 1)) IN ($ids)";
         }
         return '1 = 0';
     }
 }
 
-// 10. Scope data untuk role Guru (catatan, tindakan, riwayat, rekap)
-//     Semua guru (termasuk Wali Kelas) dapat MELIHAT seluruh catatan dari guru mana pun.
-//     Pembatasan tetap pada TINDAKAN: mengubah status hanya boleh oleh guru
-//     yang mencatat pelanggarannya (dicek lewat helper boleh_tindak()).
+// 10. Scope data guru (catatan/tindakan/riwayat/rekap): semua guru melihat semua
+//     catatan; pembatasan perubahan status ditangani boleh_tindak().
 if (!function_exists('scope_data_guru')) {
     function scope_data_guru($role, $is_wali_kelas, array $kelas_ids, $guru_id_login = 0, $alias = 'ps')
     {
@@ -167,10 +156,8 @@ if (!function_exists('scope_data_guru')) {
     }
 }
 
-// 11b. Hak menindak / mengubah status tindakan:
-//      Hanya guru yang MENCATAT pelanggaran (guru A) yang boleh mengubah status tindakannya.
-//      Guru lain hanya dapat melihat datanya. Admin bebas.
-//      Catatan tanpa guru_id dicatat oleh Admin, jadi hanya Admin yang boleh mengubahnya.
+// 11. Hak mengubah status tindakan: hanya guru yang mencatat pelanggarannya.
+//     Catatan tanpa guru_id dicatat Admin, jadi hanya Admin yang boleh.
 if (!function_exists('boleh_tindak')) {
     function boleh_tindak($ps_guru_id)
     {
@@ -182,8 +169,7 @@ if (!function_exists('boleh_tindak')) {
     }
 }
 
-// 11. Helper tahun ajaran
-//     Dipakai dashboard.php, laporan.php, penempatan_siswa.php, dll.
+// 12. Helper tahun ajaran (dipakai dashboard, laporan, penempatan, dll.)
 if (!function_exists('tahun_ajaran_aktif')) {
     function tahun_ajaran_aktif($koneksi)
     {
@@ -191,7 +177,6 @@ if (!function_exists('tahun_ajaran_aktif')) {
             $q = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE status_aktif = 1 ORDER BY id DESC LIMIT 1");
             return $q ? mysqli_fetch_assoc($q) : null;
         } catch (mysqli_sql_exception $e) {
-            // Dashboard tetap tampil walau data tahun ajaran bermasalah
             return null;
         }
     }

@@ -65,9 +65,11 @@ if ($result) {
                 <h1 class="text-2xl font-bold text-black">Riwayat Pelanggaran</h1>
                 <p class="text-sm font-bold text-slate-500 mt-1">Daftar rekam jejak pelanggaran tata tertib siswa.</p>
             </div>
+            <?php if ($role === 'Guru'): ?>
             <a href="catatan_pelanggaran.php" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i> Input Pelanggaran
             </a>
+            <?php endif; ?>
         </div>
 
         <!-- Table Card -->

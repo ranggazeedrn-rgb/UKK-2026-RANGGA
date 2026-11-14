@@ -33,6 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (mysqli_query($koneksi, $query) === false) {
                 throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
             }
+            // Siswa non-aktif otomatis dikeluarkan dari penempatan kelas (t_kelas_siswa)
+            if ($status_aktif == 0) {
+                mysqli_query($koneksi, "DELETE FROM t_kelas_siswa WHERE siswa_id = '$id'");
+            }
             $_SESSION['flash'] = ['type' => 'success', 'message' => 'Data Siswa berhasil diperbarui!'];
             header("Location: kelola_siswa.php");
             exit();

@@ -3,7 +3,7 @@ session_start();
 include 'config/koneksi.php';
 include 'cek_akses.php';
 
-$current_role = $_SESSION['role'] ?? 'Admin';
+$current_role = $role_tampil;
 $user_name = $_SESSION['name'] ?? $_SESSION['username'] ?? 'Pengguna';
 
 // Data kelas yang diampui (jika user ditunjuk sebagai wali kelas melalui Kelola Wali Kelas)
@@ -95,14 +95,21 @@ $query_recent = mysqli_query($koneksi, "
                 </div>
             </div>
 
+            <!-- Notifikasi flash (mis. pesan akses ditolak dari cek_akses.php) -->
+            <?php if (isset($_SESSION['flash'])): ?>
+                <div class="p-4 mb-6 rounded-xl text-sm font-bold <?php echo $_SESSION['flash']['type'] === 'success' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'; ?>">
+                    <?php echo htmlspecialchars($_SESSION['flash']['message']); unset($_SESSION['flash']); ?>
+                </div>
+            <?php endif; ?>
+
             <!-- Info untuk Guru yang belum menjadi Wali Kelas -->
             <?php if ($role === 'Guru' && !$is_wali_kelas): ?>
             <div class="bg-amber-50 border border-amber-200 text-amber-800 text-sm font-bold rounded-[1.5rem] px-6 py-4 mb-6 flex items-start gap-3">
                 <i class="fa-solid fa-circle-info mt-1"></i>
                 <span>
                     Anda adalah <b>Guru</b> (belum ditunjuk sebagai Wali Kelas).
-                    Anda tetap dapat mencatat pelanggaran, memperbarui <b>tindakan</b>, serta membuka halaman <b>Laporan</b>,
-                    namun isi data laporan seluruh kelas hanya ditampilkan bagi Wali Kelas.
+                    Anda tetap dapat mencatat pelanggaran serta memperbarui <b>tindakan</b>.
+                    Halaman <b>Laporan</b> hanya dapat diakses oleh Admin dan Guru yang ditunjuk sebagai <b>Wali Kelas</b>.
                 </span>
             </div>
             <?php endif; ?>

@@ -3,15 +3,9 @@ session_start();
 include 'config/koneksi.php';
 include 'cek_akses.php';
 
-// Halaman Laporan dapat dibuka oleh Admin, Guru, dan Wali Kelas.
-// Namun ISI data laporan hanya ditampilkan bagi Wali Kelas (Admin & Wali Kelas),
-// sesuai ketentuan: isi data laporan hanya untuk Guru berstatus Wali Kelas.
-if ($role === 'Guru' && !$is_wali_kelas) {
-    $_SESSION['flash'] = [
-        'type' => 'danger',
-        'message' => 'Isi data Laporan hanya dapat dilihat oleh Guru yang telah ditunjuk sebagai Wali Kelas.'
-    ];
-}
+// Halaman Laporan hanya dapat diakses oleh Admin dan Guru yang ditunjuk sebagai
+// Wali Kelas. Guru yang BUKAN wali kelas sudah diblokir langsung oleh cek_akses.php
+// (bagian 7b) dan diarahkan kembali ke dashboard, sehingga tidak pernah sampai ke sini.
 
 // Tahun ajaran aktif otomatis terpilih pada kolom "Pilih Tahun Ajaran"
 $ta_aktif_id = tahun_ajaran_aktif_id($koneksi);
@@ -47,7 +41,7 @@ if ($tanggal_sampai !== '') {
     $where[] = "ps.tanggal <= '$tanggal_sampai'";
 }
 
-// Scope data: Admin & Wali Kelas boleh melihat seluruh kelas (termasuk kelas lain)
+// Scope data: Admin melihat seluruh kelas; Wali Kelas hanya siswa kelas yang diwalikan
 $where[] = scope_kelas_laporan($role, $wali_kelas_kelas_ids);
 
 $where_sql = "WHERE " . implode(' AND ', $where);
@@ -165,16 +159,7 @@ if ($export === 'excel') {
                     <i class="fa-solid fa-circle-info mt-0.5"></i>
                     <span>
                         Anda mengakses laporan sebagai <b>Wali Kelas</b> (<?php echo htmlspecialchars(implode(', ', $wali_kelas_kelas_nama)); ?>).
-                        Laporan ini mencakup <b>seluruh kelas</b>, termasuk pelanggaran yang dilakukan siswa dari kelas lain.
-                    </span>
-                </div>
-            <?php elseif ($role === 'Guru'): ?>
-                <div class="mt-4 bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold rounded-xl px-4 py-3 flex items-start gap-2">
-                    <i class="fa-solid fa-circle-info mt-0.5"></i>
-                    <span>
-                        Anda dapat membuka halaman Laporan, namun <b>isi data laporan</b> hanya ditampilkan bagi Guru yang
-                        telah ditunjuk sebagai <b>Wali Kelas</b>. Gunakan menu <b>Riwayat</b> untuk melihat catatan
-                        pelanggaran yang Anda buat sendiri.
+                        Laporan ini hanya menampilkan siswa dari <b>kelas yang Anda walikan</b>.
                     </span>
                 </div>
             <?php endif; ?>

@@ -7,18 +7,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nama = mysqli_real_escape_string($koneksi, $_POST['nama']);
     $status_aktif = isset($_POST['status_aktif']) ? 1 : 0;
 
-    $query = "INSERT INTO t_pelanggaran_kategori (nama, status_aktif, created_at, updated_at) VALUES ('$nama', '$status_aktif', NOW(), NOW())";
-    try {
-        if (mysqli_query($koneksi, $query) === false) {
-            throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+    // Limit: kategori pelanggaran maksimal 3
+    $cek_jumlah = mysqli_query($koneksi, "SELECT COUNT(*) AS jml FROM t_pelanggaran_kategori");
+    $jumlah_kategori = $cek_jumlah ? (int)mysqli_fetch_assoc($cek_jumlah)['jml'] : 0;
+
+    if ($jumlah_kategori >= 3) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Gagal menyimpan: kategori pelanggaran maksimal 3!'];
+    } else {
+        $query = "INSERT INTO t_pelanggaran_kategori (nama, status_aktif, created_at, updated_at) VALUES ('$nama', '$status_aktif', NOW(), NOW())";
+        try {
+            if (mysqli_query($koneksi, $query) === false) {
+                throw new mysqli_sql_exception(mysqli_error($koneksi), mysqli_errno($koneksi));
+            }
+            $_SESSION['flash'] = ['type' => 'success', 'message' => 'Kategori Pelanggaran berhasil ditambahkan!'];
+            header("Location: kelola_kategori_pelanggaran.php");
+            exit();
+        } catch (mysqli_sql_exception $e) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
+                ? 'Gagal menyimpan: nama kategori sudah dipakai!'
+                : 'Gagal menyimpan kategori: ' . $e->getMessage()];
         }
-        $_SESSION['flash'] = ['type' => 'success', 'message' => 'Kategori Pelanggaran berhasil ditambahkan!'];
-        header("Location: kelola_kategori_pelanggaran.php");
-        exit();
-    } catch (mysqli_sql_exception $e) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => $e->getCode() === 1062
-            ? 'Gagal menyimpan: nama kategori sudah dipakai!'
-            : 'Gagal menyimpan kategori: ' . $e->getMessage()];
     }
 }
 ?>

@@ -1,6 +1,14 @@
 <!-- layouts/head.php -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+    // Jaring pengaman tombol mundur: bila halaman direstorasi dari cache memori
+    // browser (back-forward cache) setelah logout, muat ulang agar server
+    // menjalankan pengecekan session dan mengarahkan ke login.php.
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) location.reload();
+    });
+</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <style>

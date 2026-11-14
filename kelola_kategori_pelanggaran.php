@@ -14,6 +14,10 @@ if (isset($_GET['delete_id'])) {
 
 $query_data = "SELECT * FROM t_pelanggaran_kategori ORDER BY id DESC";
 $result = mysqli_query($koneksi, $query_data);
+
+// Limit: kategori pelanggaran maksimal 3
+$cek_jumlah = mysqli_query($koneksi, "SELECT COUNT(*) AS jml FROM t_pelanggaran_kategori");
+$jumlah_kategori = $cek_jumlah ? (int)mysqli_fetch_assoc($cek_jumlah)['jml'] : 0;
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -42,9 +46,13 @@ $result = mysqli_query($koneksi, $query_data);
                 <h1 class="text-2xl font-bold text-black">Kelola Kategori Pelanggaran</h1>
                 <p class="text-sm font-bold text-slate-500 mt-1">Atur pengelompokan jenis pelanggaran siswa.</p>
             </div>
+            <?php if ($jumlah_kategori < 3): ?>
             <a href="tambah_kategori_pelanggaran.php" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i> Tambah Kategori
             </a>
+            <?php else: ?>
+            <span class="bg-amber-100 text-amber-800 border border-amber-200 px-4 py-2 rounded-lg text-sm font-bold">Kategori sudah maksimal (3)</span>
+            <?php endif; ?>
         </div>
 
         <?php if (isset($_SESSION['flash'])): ?>
