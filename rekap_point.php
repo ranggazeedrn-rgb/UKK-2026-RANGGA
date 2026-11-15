@@ -45,6 +45,7 @@ $query = "SELECT s.id, s.nama AS nama_siswa,
                      ($sub_ps ORDER BY ps3.id DESC LIMIT 1),
                      '-'
                  ) AS nama_kelas,
+                 COUNT(ps.id) AS jumlah_dicatat,
                  COALESCE(SUM(p.poin), 0) AS total_poin
           FROM t_siswa s
           $join_ps
@@ -140,6 +141,7 @@ $open_role = $_SESSION['role'] ?? 'Guru';
                         <th class="border border-slate-300 px-4 py-3 text-center w-12">NO</th>
                         <th class="border border-slate-300 px-4 py-3 text-left">NAMA SISWA</th>
                         <th class="border border-slate-300 px-4 py-3 text-center w-32">KELAS</th>
+                        <th class="border border-slate-300 px-4 py-3 text-center w-36">JUMLAH DICATAT</th>
                         <th class="border border-slate-300 px-4 py-3 text-center w-44">TOTAL POIN PELANGGARAN</th>
                         <th class="border border-slate-300 px-4 py-3 text-center w-40">STATUS / TINDAKAN</th>
                     </tr>
@@ -162,6 +164,7 @@ $open_role = $_SESSION['role'] ?? 'Guru';
                                 <td class="border border-slate-300 px-4 py-2.5 text-center font-bold text-slate-600"><?php echo $no++; ?></td>
                                 <td class="border border-slate-300 px-4 py-2.5 font-bold text-black"><?php echo htmlspecialchars($row['nama_siswa']); ?></td>
                                 <td class="border border-slate-300 px-4 py-2.5 text-center font-bold"><?php echo htmlspecialchars($row['nama_kelas']); ?></td>
+                                <td class="border border-slate-300 px-4 py-2.5 text-center font-bold <?php echo (int)$row['jumlah_dicatat'] > 0 ? 'text-orange-600' : 'text-slate-600'; ?>"><?php echo (int)$row['jumlah_dicatat']; ?> Kali</td>
                                 <td class="border border-slate-300 px-4 py-2.5 text-center font-bold text-base <?php echo $poin > 0 ? 'text-red-600' : 'text-slate-600'; ?>"><?php echo $poin; ?> Poin</td>
                                 <td class="border border-slate-300 px-4 py-2.5 text-center"><span class="px-2 py-1 rounded text-xs <?php echo $status_class; ?>"><?php echo $status_label; ?></span></td>
                             </tr>

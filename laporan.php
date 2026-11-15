@@ -28,8 +28,15 @@ if ($tanggal_sampai !== '') {
     $where[] = "ps.tanggal <= '$tanggal_sampai'";
 }
 
-// Scope data: Admin melihat seluruh kelas; Wali Kelas hanya siswa kelas yang diwalikan
-$where[] = scope_kelas_laporan($role, $wali_kelas_kelas_ids);
+// Scope data: Admin melihat seluruh kelas; Wali Kelas hanya catatan yang ia catat sendiri untuk siswa kelas yang diwalikan
+if ($role === 'Guru' && $is_wali_kelas && $guru_id_login) {
+    // Wali Kelas: hanya catatan pelanggaran yang DIA SENDIRI catat untuk siswa kelas yang diwalikan
+    $ids_wk_scope = implode(',', array_map('intval', $wali_kelas_kelas_ids));
+    $where[] = "ps.guru_id = " . (int)$guru_id_login;
+    $where[] = "COALESCE(ps.kelas_id, (SELECT ks.kelas_id FROM t_kelas_siswa ks WHERE ks.siswa_id = ps.siswa_id ORDER BY ks.id DESC LIMIT 1)) IN ($ids_wk_scope)";
+} else {
+    $where[] = scope_kelas_laporan($role, $wali_kelas_kelas_ids);
+}
 
 $where_sql = "WHERE " . implode(' AND ', $where);
 
@@ -158,7 +165,7 @@ if ($export === 'excel') {
                     <i class="fa-solid fa-circle-info mt-0.5"></i>
                     <span>
                         Anda mengakses laporan sebagai <b>Wali Kelas</b> (<?php echo htmlspecialchars(implode(', ', $wali_kelas_kelas_nama)); ?>).
-                        Laporan ini hanya menampilkan siswa dari <b>kelas yang Anda walikan</b>.
+                        Laporan ini hanya menampilkan catatan pelanggaran yang <b>Anda catat sendiri</b> untuk siswa kelas yang Anda walikan.
                     </span>
                 </div>
             <?php endif; ?>

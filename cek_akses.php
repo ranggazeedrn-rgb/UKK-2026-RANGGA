@@ -84,6 +84,9 @@ $akses_halaman = [
     'tindakan.php'            => ['Admin', 'Guru'],
     'laporan.php'             => ['Admin', 'Guru'],
     'dashboard.php'           => ['Admin', 'Guru'],
+    'tambah_surat.php'        => ['Admin', 'Guru'],
+    'cetak_surat.php'         => ['Admin', 'Guru'],
+    'kelola_surat.php'        => ['Admin', 'Guru'],
     'kelola_siswa.php'        => ['Admin'],
     'tambah_siswa.php'        => ['Admin'],
     'edit_siswa.php'          => ['Admin'],
@@ -119,7 +122,7 @@ if (array_key_exists($current_file, $akses_halaman) && !in_array($role, $akses_h
 // 8. Halaman khusus Admin & Wali Kelas: Guru biasa (non-wali kelas) hanya boleh
 //    mengakses Dashboard, Catat Pelanggaran, Tindakan, dan Rekap Poin.
 //    Laporan & Riwayat dibatasi untuk Admin & Wali Kelas.
-if (in_array($current_file, ['laporan.php', 'riwayat.php'], true) && $role === 'Guru' && !$is_wali_kelas) {
+if (in_array($current_file, ['laporan.php', 'riwayat.php', 'tambah_surat.php', 'cetak_surat.php', 'kelola_surat.php'], true) && $role === 'Guru' && !$is_wali_kelas) {
     $_SESSION['flash'] = [
         'type' => 'danger',
         'message' => 'Akses ditolak. Halaman ini hanya dapat diakses oleh Guru yang ditunjuk sebagai Wali Kelas.'

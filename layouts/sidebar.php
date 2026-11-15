@@ -88,6 +88,18 @@ $active = fn($file) => $current_page === $file ? 'text-blue-600 bg-blue-50 round
         </a>
         <?php endif; ?>
  
+        <?php if ($role === 'Guru' && $is_wali_kelas): ?>
+        <a href="riwayat.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('riwayat.php'); ?>">
+            <i class="fa-solid fa-clock-rotate-left text-lg w-5 text-center"></i> Riwayat
+        </a>
+        <?php endif; ?>
+
+        <?php if ($role === 'Admin' || ($role === 'Guru' && $is_wali_kelas)): ?>
+        <a href="kelola_surat.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('kelola_surat.php'); ?>">
+            <i class="fa-solid fa-envelope-open-text text-lg w-5 text-center"></i> Cetak Surat
+        </a>
+        <?php endif; ?>
+ 
         <?php if ($role === 'Admin'): ?>
         <!-- Menu About Me (khusus Admin) -->
         <div class="pt-4 pb-1">
