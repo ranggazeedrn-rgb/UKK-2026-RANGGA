@@ -99,6 +99,15 @@ if ($role === 'Admin' || ($role === 'Guru' && $is_wali_kelas)) {
         $filter_wk_sql = "AND COALESCE(($sub_ks_id), ($sub_ps_id), 0) IN ($ids_wk_str)";
     }
 
+    // Pencarian nama siswa, NIS, atau kelas (form search di atas tabel)
+    $search = trim($_GET['search'] ?? '');
+    $ada_pencarian = $search !== '';
+    $filter_cari_sql = '';
+    if ($ada_pencarian) {
+        $s = mysqli_real_escape_string($koneksi, $search);
+        $filter_cari_sql = " AND (s.nama LIKE '%$s%' OR s.nis LIKE '%$s%' OR MAX(COALESCE(($sub_ks), ($sub_ps), '-')) LIKE '%$s%')";
+    }
+
     $q_bahaya = mysqli_query($koneksi, "
         SELECT s.id, s.nis, s.nama AS nama_siswa,
                COALESCE(($sub_ks), ($sub_ps), '-') AS nama_kelas,
@@ -111,7 +120,7 @@ if ($role === 'Admin' || ($role === 'Guru' && $is_wali_kelas)) {
         INNER JOIN t_pelanggaran_siswa ps ON s.id = ps.siswa_id
         INNER JOIN t_pelanggaran p ON ps.pelanggaran_id = p.id
         GROUP BY s.id, s.nis, s.nama
-        HAVING total_poin >= 20 $filter_wk_sql
+        HAVING total_poin >= 20 $filter_wk_sql $filter_cari_sql
         ORDER BY total_poin DESC, s.nama ASC
     ");
 
@@ -199,15 +208,30 @@ if ($role === 'Admin' || ($role === 'Guru' && $is_wali_kelas)) {
                             <p class="text-xs font-bold text-slate-500">Siswa dengan akumulasi poin ≥ 20 (Peringatan) atau ≥ 50 (Panggilan Orang Tua). Buat & cetak surat penindakan di sini.</p>
                         </div>
                     </div>
-                    <a href="kelola_surat.php" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
-                        <i class="fa-solid fa-envelope-open-text"></i> Kelola & Arsip Surat
-                    </a>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <?php if (!empty($siswa_lewat_batas) || $ada_pencarian): ?>
+                            <span class="px-3 py-1 rounded-lg bg-red-50 border border-red-100 text-xs font-bold text-red-600">
+                                <?php echo count($siswa_lewat_batas); ?> Siswa
+                            </span>
+                        <?php endif; ?>
+                        <a href="kelola_surat.php" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                            <i class="fa-solid fa-envelope-open-text"></i> Kelola & Arsip Surat
+                        </a>
+                    </div>
                 </div>
 
-                <?php if (!empty($siswa_lewat_batas)): ?>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
-                            <thead>
+                <?php if (!empty($siswa_lewat_batas) || $ada_pencarian): ?>
+                    <form method="GET" class="mb-4 flex flex-wrap items-center gap-2">
+                        <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Cari Nama, NIS, atau Kelas..." class="px-4 py-2 border border-slate-300 rounded-lg text-sm w-72 max-w-full focus:outline-none focus:border-blue-600">
+                        <button type="submit" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-lg text-sm font-bold">Cari</button>
+                        <?php if ($ada_pencarian): ?>
+                            <a href="dashboard.php" class="px-2 py-2 text-sm font-bold text-slate-500 hover:text-slate-800">Reset</a>
+                        <?php endif; ?>
+                    </form>
+
+                    <div class="max-h-[26rem] overflow-auto overscroll-contain rounded-xl border border-slate-100 [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] focus:outline-none focus:ring-2 focus:ring-blue-500/30" tabindex="0" role="region" aria-label="Daftar siswa melebihi batas aman poin">
+                        <table class="w-full min-w-[880px] text-left border-collapse text-sm">
+                            <thead class="sticky top-0 z-10 bg-white shadow-[inset_0_-1px_0_#e2e8f0]">
                                 <tr class="border-b border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-wider">
                                     <th class="py-2.5 px-3">NO</th>
                                     <th class="py-2.5 px-3">NAMA SISWA / NIS</th>
@@ -219,7 +243,7 @@ if ($role === 'Admin' || ($role === 'Guru' && $is_wali_kelas)) {
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
-                                <?php $no_b = 1; foreach ($siswa_lewat_batas as $sb):
+                                <?php if (!empty($siswa_lewat_batas)): $no_b = 1; foreach ($siswa_lewat_batas as $sb):
                                     $poin_b = (int)$sb['total_poin'];
                                     $is_panggilan = $poin_b >= 50;
                                     $has_surat = !empty($sb['surat_terakhir_id']);
@@ -230,7 +254,7 @@ if ($role === 'Admin' || ($role === 'Guru' && $is_wali_kelas)) {
                                         <div class="font-bold text-black"><?php echo htmlspecialchars($sb['nama_siswa']); ?></div>
                                         <div class="text-[11px] font-bold text-slate-400">NIS: <?php echo htmlspecialchars($sb['nis'] ?? '-'); ?></div>
                                     </td>
-                                    <td class="py-3 px-3 text-center font-bold"><?php echo htmlspecialchars($sb['nama_kelas']); ?></td>
+                                    <td class="py-3 px-3 text-center font-bold whitespace-nowrap"><?php echo htmlspecialchars($sb['nama_kelas']); ?></td>
                                     <td class="py-3 px-3 text-center font-bold text-red-600 text-base">
                                         <?php echo $poin_b; ?> Poin
                                     </td>
@@ -263,7 +287,14 @@ if ($role === 'Admin' || ($role === 'Guru' && $is_wali_kelas)) {
                                         </div>
                                     </td>
                                 </tr>
-                                <?php endforeach; ?>
+                                <?php endforeach; else: ?>
+                                <tr>
+                                    <td colspan="7" class="py-10 px-4 text-center">
+                                        <div class="text-sm font-bold text-slate-500">Tidak ada siswa yang cocok dengan pencarian "<?php echo htmlspecialchars($search); ?>".</div>
+                                        <a href="dashboard.php" class="inline-block mt-2 text-xs font-bold text-blue-600 hover:underline">Tampilkan semua siswa</a>
+                                    </td>
+                                </tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -277,20 +308,33 @@ if ($role === 'Admin' || ($role === 'Guru' && $is_wali_kelas)) {
             <?php endif; ?>
 
             <!-- Daftar Kelas -->
-            <?php if ($q_daftar_kelas && mysqli_num_rows($q_daftar_kelas) > 0): ?>
-            <div class="bg-slate-100 p-6 rounded-[1.5rem] mb-8">
-                <div class="flex items-center gap-3 mb-4">
-                    <i class="fa-solid fa-chalkboard text-xl text-blue-600"></i>
-                    <div>
-                        <h3 class="text-sm font-bold text-black uppercase tracking-wider">Daftar Kelas</h3>
+            <?php if ($q_daftar_kelas && mysqli_num_rows($q_daftar_kelas) > 0): $jumlah_kelas_dk = mysqli_num_rows($q_daftar_kelas); ?>
+            <div class="bg-white border border-slate-200 p-6 rounded-[1.5rem] mb-8 shadow-sm">
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-chalkboard text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-black uppercase tracking-wider">Daftar Kelas</h3>
+                            <p class="text-xs font-bold text-slate-500">Kelas dalam cakupan akses Anda.</p>
+                        </div>
                     </div>
+                    <span class="shrink-0 px-3 py-1 rounded-lg bg-slate-100 text-xs font-bold text-slate-600">
+                        <?php echo $jumlah_kelas_dk; ?> Kelas
+                    </span>
                 </div>
-                <div class="flex flex-wrap gap-2">
-                    <?php while ($k_dk = mysqli_fetch_assoc($q_daftar_kelas)): ?>
-                        <span class="bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-sm font-bold text-slate-600">
-                            <?php echo htmlspecialchars($k_dk['nama']); ?>
-                        </span>
-                    <?php endwhile; ?>
+                <div class="max-h-80 overflow-y-auto overscroll-contain pr-1 rounded-xl [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] focus:outline-none focus:ring-2 focus:ring-blue-500/30" tabindex="0" role="region" aria-label="Daftar kelas, <?php echo $jumlah_kelas_dk; ?> kelas">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                        <?php while ($k_dk = mysqli_fetch_assoc($q_daftar_kelas)): ?>
+                            <div class="flex items-center gap-2.5 min-w-0 bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition">
+                                <i class="fa-solid fa-school text-xs text-blue-600 shrink-0"></i>
+                                <span class="text-sm font-bold text-slate-700 truncate" title="<?php echo htmlspecialchars($k_dk['nama']); ?>">
+                                    <?php echo htmlspecialchars($k_dk['nama']); ?>
+                                </span>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
                 </div>
             </div>
             <?php endif; ?>

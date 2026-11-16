@@ -28,6 +28,13 @@ if ($role === 'Guru' && $is_wali_kelas && !empty($wali_kelas_kelas_ids)) {
     $where .= " AND sr.kelas_id IN ($ids_wk)";
 }
 
+// Fitur Filter/Search
+$search = trim($_GET['search'] ?? '');
+if ($search !== '') {
+    $s = mysqli_real_escape_string($koneksi, $search);
+    $where .= " AND (sr.nomor_surat LIKE '%$s%' OR s.nama LIKE '%$s%' OR s.nis LIKE '%$s%' OR k.nama LIKE '%$s%' OR sr.jenis_surat LIKE '%$s%')";
+}
+
 $query_surat = "SELECT sr.*, s.nama AS nama_siswa, s.nis, k.nama AS nama_kelas
                 FROM t_surat sr
                 LEFT JOIN t_siswa s ON sr.siswa_id = s.id
@@ -71,6 +78,11 @@ if ($result_surat) {
                 <?php echo htmlspecialchars($_SESSION['flash']['message']); unset($_SESSION['flash']); ?>
             </div>
         <?php endif; ?>
+
+        <form method="GET" class="mb-6 flex gap-2">
+            <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Cari Nomor Surat, Nama Siswa, atau Kelas..." class="px-4 py-2 border border-slate-300 rounded-lg text-sm w-80 focus:outline-none focus:border-blue-600">
+            <button type="submit" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-lg text-sm font-bold">Cari</button>
+        </form>
 
         <!-- Table Card -->
         <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-200">
@@ -138,6 +150,7 @@ if ($result_surat) {
         $(document).ready(function() {
             $('#tabelSurat').DataTable({
                 "order": [],
+                "searching": false, // pencarian pakai form "Cari" di atas, sama seperti halaman lain
                 "language": {
                     "lengthMenu": "Tampilkan _MENU_ data",
                     "zeroRecords": "Belum ada surat yang diterbitkan.",

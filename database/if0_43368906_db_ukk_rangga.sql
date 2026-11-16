@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: sql202.infinityfree.com
--- Generation Time: Nov 12, 2026 at 08:14 AM
+-- Generation Time: Nov 16, 2026 at 09:16 AM
 -- Server version: 11.4.13-MariaDB
 -- PHP Version: 7.2.22
 
@@ -123,7 +123,42 @@ CREATE TABLE `t_kelas` (
 INSERT INTO `t_kelas` (`id`, `nama`, `tingkat`, `jurusan`, `status_aktif`, `created_at`, `updated_at`) VALUES
 (11, 'XII RPL 1', 'XII', 'RPL', 1, '2026-09-28 06:01:44', '2026-11-04 06:17:13'),
 (26, 'XII RPL 2', 'XII', 'RPL', 1, '2026-09-28 06:01:44', '2026-09-28 06:01:44'),
-(111, 'XI RPL 1', 'XI', 'RPL', 1, '2026-11-04 07:41:15', '2026-11-04 07:41:27');
+(111, 'XI RPL 1', 'XI', 'RPL', 1, '2026-11-04 07:41:15', '2026-11-04 07:41:27'),
+(188, 'X BD', 'X', 'BD', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(189, 'X TKJ 1', 'X', 'TKJ', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(190, 'X RPL 1', 'X', 'RPL', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(191, 'XI BD', 'XI', 'BD', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(192, 'XI TKJ 1', 'XI', 'TKJ', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(193, 'X RPL 2', 'X', 'RPL', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(194, 'XI TSM 2', 'XI', 'TSM', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(195, 'X TSM 2', 'X', 'TSM', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(196, 'XII BD', 'XII', 'BD', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(197, 'XII TKJ 1', 'XII', 'TKJ', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(198, 'X TKJ 2', 'X', 'TKJ', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(199, 'X TKR 3', 'X', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(200, 'XII TKJ 2', 'XII', 'TKJ', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(201, 'XII TKR 5', 'XII', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(202, 'X TSM 1', 'X', 'TSM', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(203, 'XI TKR 3', 'XI', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(204, 'XI TKJ 2', 'XI', 'TKJ', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(205, 'X TKR 4', 'X', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(206, 'XII TKR 1', 'XII', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(207, 'XII TSM 1', 'XII', 'TSM', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(208, 'XII TKR 2', 'XII', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(209, 'XI TKR 2', 'XI', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(210, 'XI TSM 1', 'XI', 'TSM', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(211, 'XII TKR 4', 'XII', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(212, 'X TKR 2', 'X', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(213, 'XII TKJ 3', 'XII', 'TKJ', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(214, 'X TSM 3', 'X', 'TSM', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(215, 'X TKR 5', 'X', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(216, 'X TKR 1', 'X', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(217, 'X TKJ 3', 'X', 'TKJ', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(218, 'XII TSM 2', 'XII', 'TSM', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(219, 'XII TKJ 4', 'XII', 'TKJ', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(220, 'XII TKR 3', 'XII', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(221, 'XII TSM 3', 'XII', 'TSM', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44'),
+(222, 'XI TKR 1', 'XI', 'TKR', 1, '2026-11-16 11:35:44', '2026-11-16 11:35:44');
 
 -- --------------------------------------------------------
 
@@ -305,7 +340,9 @@ INSERT INTO `t_pelanggaran_siswa` (`id`, `tahun_ajaran_id`, `siswa_id`, `nama_si
 (17, 101, 111, 'KAYILA NUR FADILAH', 11, 'XII RPL 1', 110, 0, 103, 75, 'Arif Kusmawan, S.Pd', '2026-11-11', '', 5, 'Diberi teguran & pembinaan', 'Selesai', '2026-11-11 06:26:58', '2026-11-11 06:27:21'),
 (18, 101, 130, 'FITRI NUR SYIAMI', 26, 'XII RPL 2', 112, 0, 104, 75, 'Arif Kusmawan, S.Pd', '2026-11-11', '', 10, 'Diberi teguran & pembinaan', 'Selesai', '2026-11-11 06:29:01', '2026-11-11 06:29:16'),
 (19, 101, 116, 'MUHAMMAD ZULFAN NURFALANSYAH', 11, 'XII RPL 1', 114, 0, 104, 75, 'Arif Kusmawan, S.Pd', '2026-11-11', '', 15, 'Diberi teguran & pembinaan', 'Selesai', '2026-11-11 06:29:48', '2026-11-11 07:19:58'),
-(20, 101, 132, 'MOHAMMAD ATALARIK ALI SYAHBANA', 26, 'XII RPL 2', 110, 0, 103, 79, 'Ari Sandriana, S.Kom', '2026-11-11', '', 5, 'Diberi teguran & pembinaan', 'Dicatat', '2026-11-11 07:18:52', '2026-11-11 07:18:52');
+(20, 101, 132, 'MOHAMMAD ATALARIK ALI SYAHBANA', 26, 'XII RPL 2', 110, 0, 103, 79, 'Ari Sandriana, S.Kom', '2026-11-11', '', 5, 'Diberi teguran & pembinaan', 'Selesai', '2026-11-11 07:18:52', '2026-11-16 12:20:29'),
+(21, 101, 105, 'AZMIL AMIRA', 11, 'XII RPL 1', 107, 0, 103, 79, 'Ari Sandriana, S.Kom', '2026-11-16', '', 5, 'Diberi teguran & pembinaan', 'Dicatat', '2026-11-16 12:21:36', '2026-11-16 12:21:36'),
+(22, 101, 107, 'ERLANGGA SAPUTRA HIDAYAT', 11, 'XII RPL 1', 120, 0, 105, 79, 'Ari Sandriana, S.Kom', '2026-11-16', '', 40, 'Diberi teguran & pembinaan', 'Selesai', '2026-11-16 12:22:29', '2026-11-16 12:22:37');
 
 -- --------------------------------------------------------
 
@@ -389,7 +426,7 @@ INSERT INTO `t_siswa` (`id`, `nis`, `nisn`, `nama`, `jenis_kelamin`, `tanggal_la
 --
 
 CREATE TABLE `t_surat` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `nomor_surat` varchar(50) NOT NULL,
   `jenis_surat` varchar(50) NOT NULL COMMENT 'Surat Peringatan / Surat Panggilan Orang Tua',
   `siswa_id` int(11) NOT NULL,
@@ -401,13 +438,16 @@ CREATE TABLE `t_surat` (
   `dibuat_oleh` int(11) DEFAULT NULL COMMENT 'user_id yang membuat surat',
   `nama_pembuat` varchar(150) NOT NULL,
   `status` varchar(30) NOT NULL DEFAULT 'Diterbitkan' COMMENT 'Diterbitkan / Dibatalkan',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `siswa_id` (`siswa_id`),
-  KEY `kelas_id` (`kelas_id`),
-  KEY `dibuat_oleh` (`dibuat_oleh`)
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `t_surat`
+--
+
+INSERT INTO `t_surat` (`id`, `nomor_surat`, `jenis_surat`, `siswa_id`, `kelas_id`, `total_poin`, `perihal`, `isi_surat`, `tanggal_surat`, `dibuat_oleh`, `nama_pembuat`, `status`, `created_at`, `updated_at`) VALUES
+(1, '001/SURAT-KES/XI/2026', 'Surat Peringatan', 107, 11, 40, 'Peringatan Kedisiplinan Siswa', 'Dengan hormat,\r\n\r\nMelalui surat ini kami sampaikan bahwa siswa:\r\n\r\nNama  : ERLANGGA SAPUTRA HIDAYAT\r\nKelas : XII RPL 1\r\nTotal Poin Pelanggaran : 40 Poin\r\n\r\nTelah melampaui batas aman akumulasi poin kedisiplinan yang ditetapkan sekolah (â‰¥ 20 Poin - Peringatan). Surat ini merupakan peringatan resmi agar siswa yang bersangkutan segera memperbaiki perilaku dan mematuhi tata tertib sekolah.\r\n\r\nApabila pelanggaran terus berlanjut dan akumulasi poin mencapai â‰¥ 50 Poin, pihak sekolah akan mengirimkan Surat Panggilan Orang Tua.\r\n\r\nDemikian surat peringatan ini dibuat untuk dapat diperhatikan sebagaimana mestinya.', '2026-11-16', 178, 'Ari Sandriana, S.Kom', 'Diterbitkan', '2026-11-16 12:22:52', '2026-11-16 12:22:52');
 
 -- --------------------------------------------------------
 
@@ -466,7 +506,9 @@ INSERT INTO `t_tindakan` (`id`, `pelanggaran_siswa_id`, `guru_id`, `nama_guru`, 
 (8, 17, 75, 'Arif Kusmawan, S.Pd', '2026-11-11', 'Diberi teguran & pembinaan', '', 'Selesai', '2026-11-11 06:27:21', '2026-11-11 06:27:21'),
 (9, 18, 75, 'Arif Kusmawan, S.Pd', '2026-11-11', 'Diberi teguran & pembinaan', '', 'Selesai', '2026-11-11 06:29:16', '2026-11-11 06:29:16'),
 (10, 16, 69, 'Ansor Muhajir, S.T', '2026-11-12', 'Diberi teguran & pembinaan', '', 'Selesai', '2026-11-11 06:35:30', '2026-11-11 06:35:30'),
-(11, 19, 75, 'Arif Kusmawan, S.Pd', '2026-11-11', 'Diberi teguran & pembinaan', '', 'Selesai', '2026-11-11 07:19:58', '2026-11-11 07:19:58');
+(11, 19, 75, 'Arif Kusmawan, S.Pd', '2026-11-11', 'Diberi teguran & pembinaan', '', 'Selesai', '2026-11-11 07:19:58', '2026-11-11 07:19:58'),
+(12, 20, 79, 'Ari Sandriana, S.Kom', '2026-11-16', 'Diberi teguran & pembinaan', 'teguran lisan', 'Selesai', '2026-11-16 12:20:29', '2026-11-16 12:20:29'),
+(13, 22, 79, 'Ari Sandriana, S.Kom', '2026-11-16', 'Diberi teguran & pembinaan', '', 'Selesai', '2026-11-16 12:22:37', '2026-11-16 12:22:37');
 
 -- --------------------------------------------------------
 
@@ -574,7 +616,36 @@ CREATE TABLE `t_wali_kelas` (
 
 INSERT INTO `t_wali_kelas` (`id`, `tahun_ajaran_id`, `kelas_id`, `guru_id`, `tanggal_mulai`, `tanggal_selesai`, `status_aktif`, `created_at`, `updated_at`) VALUES
 (18, 101, 26, 83, '0000-00-00', '0000-00-00', 1, '2026-11-04 06:25:29', '2026-11-04 06:25:29'),
-(20, 101, 11, 79, '0000-00-00', '0000-00-00', 1, '2026-11-04 15:13:44', '2026-11-04 15:17:03');
+(20, 101, 11, 79, '0000-00-00', '0000-00-00', 1, '2026-11-04 15:13:44', '2026-11-04 15:17:03'),
+(21, 101, 200, 53, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(22, 101, 209, 62, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(23, 101, 216, 66, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(24, 101, 190, 69, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(25, 101, 211, 71, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(26, 101, 207, 73, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(27, 101, 210, 74, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(28, 101, 205, 75, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(29, 101, 188, 78, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(30, 101, 196, 80, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(31, 101, 203, 81, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(32, 101, 215, 84, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(33, 101, 217, 85, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(34, 101, 195, 86, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(35, 101, 206, 87, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(36, 101, 214, 88, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(37, 101, 193, 89, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(38, 101, 197, 91, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(39, 101, 219, 92, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(40, 101, 220, 93, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(41, 101, 199, 95, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(42, 101, 201, 97, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(43, 101, 213, 98, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(44, 101, 198, 99, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(45, 101, 194, 100, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(46, 101, 202, 101, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(47, 101, 218, 102, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(48, 101, 221, 103, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27'),
+(49, 101, 111, 104, '2026-07-13', '2027-06-30', 1, '2026-11-16 11:39:27', '2026-11-16 11:39:27');
 
 --
 -- Indexes for dumped tables
@@ -642,6 +713,15 @@ ALTER TABLE `t_siswa`
   ADD UNIQUE KEY `uq_t_siswa_nis` (`nis`);
 
 --
+-- Indexes for table `t_surat`
+--
+ALTER TABLE `t_surat`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `siswa_id` (`siswa_id`),
+  ADD KEY `kelas_id` (`kelas_id`),
+  ADD KEY `dibuat_oleh` (`dibuat_oleh`);
+
+--
 -- Indexes for table `t_tahun_ajaran`
 --
 ALTER TABLE `t_tahun_ajaran`
@@ -687,7 +767,7 @@ ALTER TABLE `t_guru`
 -- AUTO_INCREMENT for table `t_kelas`
 --
 ALTER TABLE `t_kelas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=223;
 
 --
 -- AUTO_INCREMENT for table `t_kelas_siswa`
@@ -711,13 +791,19 @@ ALTER TABLE `t_pelanggaran_kategori`
 -- AUTO_INCREMENT for table `t_pelanggaran_siswa`
 --
 ALTER TABLE `t_pelanggaran_siswa`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `t_siswa`
 --
 ALTER TABLE `t_siswa`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10000;
+
+--
+-- AUTO_INCREMENT for table `t_surat`
+--
+ALTER TABLE `t_surat`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `t_tahun_ajaran`
@@ -729,7 +815,7 @@ ALTER TABLE `t_tahun_ajaran`
 -- AUTO_INCREMENT for table `t_tindakan`
 --
 ALTER TABLE `t_tindakan`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `t_users`
@@ -741,7 +827,7 @@ ALTER TABLE `t_users`
 -- AUTO_INCREMENT for table `t_wali_kelas`
 --
 ALTER TABLE `t_wali_kelas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- Constraints for dumped tables
