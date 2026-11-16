@@ -69,7 +69,6 @@ Aplikasi web untuk mencatat, memantau, dan merekap pelanggaran siswa secara terp
 |------|-------|----------|
 | Admin | `admin@ukk2026.com` | `admin123` |
 | Guru | `guru@ukk2026.com` | `guru123` |
-| Wali Kelas | `walikelas@ukk2026.com` | `walikelas123` |
 
 Akun guru seed lainnya (`*@sekolah.sch.id`) memakai password `guru123`. Segera ganti password setelah aplikasi dipakai.
 
