@@ -15,12 +15,12 @@ $search = $_GET['search'] ?? '';
 $where = "";
 if (!empty($search)) {
     $s = mysqli_real_escape_string($koneksi, $search);
-    $where = "WHERE g.nama LIKE '%$s%' OR k.nama LIKE '%$s%' OR ta.nama LIKE '%$s%'";
+    $where = "WHERE g.nama LIKE '%$s%' OR g.email LIKE '%$s%' OR k.nama LIKE '%$s%' OR ta.nama LIKE '%$s%'";
 }
 
 // Alias kolom eksplisit: ta.* punya kolom id/status_aktif yang menimpa wk.id
 $query_data = "SELECT wk.id, wk.tahun_ajaran_id, wk.kelas_id, wk.guru_id, wk.status_aktif,
-                      g.nama as nama_guru, k.nama as nama_kelas, ta.nama as nama_ta
+                      g.nama as nama_guru, g.email as email_guru, k.nama as nama_kelas, ta.nama as nama_ta
                FROM t_wali_kelas wk
                LEFT JOIN t_guru g ON wk.guru_id = g.id
                LEFT JOIN t_kelas k ON wk.kelas_id = k.id
@@ -58,7 +58,7 @@ $result = mysqli_query($koneksi, $query_data);
         <?php endif; ?>
 
         <form method="GET" class="mb-6 flex gap-2">
-            <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Cari Nama Guru, Kelas, atau Tahun Ajaran..." class="px-4 py-2 border border-slate-300 rounded-lg text-sm w-80 focus:outline-none focus:border-blue-600">
+            <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Cari Nama Guru, Email, Kelas, atau Tahun Ajaran..." class="px-4 py-2 border border-slate-300 rounded-lg text-sm w-80 focus:outline-none focus:border-blue-600">
             <button type="submit" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-lg text-sm font-bold">Cari</button>
         </form>
 
@@ -71,6 +71,7 @@ $result = mysqli_query($koneksi, $query_data);
                             <th class="border border-slate-300 px-4 py-3 text-xs font-bold text-black uppercase text-left">TAHUN AJARAN</th>
                             <th class="border border-slate-300 px-4 py-3 text-xs font-bold text-black uppercase text-center">KELAS</th>
                             <th class="border border-slate-300 px-4 py-3 text-xs font-bold text-black uppercase text-left">NAMA GURU (WALI KELAS)</th>
+                            <th class="border border-slate-300 px-4 py-3 text-xs font-bold text-black uppercase text-left">EMAIL</th>
                             <th class="border border-slate-300 px-4 py-3 text-xs font-bold text-black uppercase text-center">STATUS</th>
                             <th class="border border-slate-300 px-4 py-3 text-xs font-bold text-black uppercase text-center">AKSI</th>
                         </tr>
@@ -87,6 +88,15 @@ $result = mysqli_query($koneksi, $query_data);
                                     </td>
                                     <td class="border border-slate-300 px-4 py-3 text-sm font-bold text-black text-center"><?php echo htmlspecialchars($data['nama_kelas'] ?? '-'); ?></td>
                                     <td class="border border-slate-300 px-4 py-3 text-sm text-slate-800"><?php echo htmlspecialchars($data['nama_guru'] ?? '-'); ?></td>
+                                    <td class="border border-slate-300 px-4 py-3 text-sm">
+                                        <?php if (!empty($data['email_guru'])): ?>
+                                            <a href="mailto:<?php echo htmlspecialchars($data['email_guru']); ?>" class="text-blue-600 font-bold hover:underline inline-flex items-center gap-1">
+                                                <i class="fa-solid fa-envelope text-xs"></i> <?php echo htmlspecialchars($data['email_guru']); ?>
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="text-slate-400 font-bold italic">-</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="border border-slate-300 px-4 py-3 text-sm text-center">
                                         <?php echo (isset($data['status_aktif']) && $data['status_aktif'] == 1) ? '<span class="text-green-600 font-bold bg-green-100 px-2 py-1 rounded text-xs">Aktif</span>' : '<span class="text-slate-500 font-bold bg-slate-100 px-2 py-1 rounded text-xs">Non-Aktif</span>'; ?>
                                     </td>
@@ -98,7 +108,7 @@ $result = mysqli_query($koneksi, $query_data);
                             <?php endwhile; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="5" class="border border-slate-300 px-4 py-8 text-center text-slate-500 font-bold">Belum ada data wali kelas.</td>
+                                <td colspan="6" class="border border-slate-300 px-4 py-8 text-center text-slate-500 font-bold">Belum ada data wali kelas.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -108,3 +118,4 @@ $result = mysqli_query($koneksi, $query_data);
     </main>
 </body>
 </html>
+

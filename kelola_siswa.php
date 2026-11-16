@@ -114,3 +114,4 @@ $result = mysqli_query($koneksi, $query_data);
     </script>
 </body>
 </html>
+

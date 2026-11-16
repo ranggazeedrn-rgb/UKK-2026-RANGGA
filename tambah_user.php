@@ -93,14 +93,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_user'])) {
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-2">EMAIL (Opsional)</label>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">EMAIL</label>
                             <input type="email" name="email" placeholder="Masukkan email aktif" class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-2">PASSWORD *</label>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">PASSWORD </label>
                             <input type="password" name="password" id="password" placeholder="Masukkan password" required class="w-full border border-slate-300 px-4 py-3 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
                         </div>
 
@@ -149,3 +149,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['simpan_user'])) {
     </script>
 </body>
 </html>
+

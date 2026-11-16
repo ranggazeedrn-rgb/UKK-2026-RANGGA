@@ -55,10 +55,10 @@ if ($boleh_semua_kelas) {
 $guru_kelas = [];
 if ($role === 'Guru' && !$is_wali_kelas && $guru_id_login) {
     $q_guru_kelas = mysqli_query($koneksi, "
-        SELECT DISTINCT k.nama 
-        FROM t_pelanggaran_siswa ps 
-        INNER JOIN t_kelas k ON ps.kelas_id = k.id 
-        WHERE ps.guru_id = " . (int)$guru_id_login . " 
+        SELECT DISTINCT k.nama
+        FROM t_pelanggaran_siswa ps
+        INNER JOIN t_kelas k ON ps.kelas_id = k.id
+        WHERE ps.guru_id = " . (int)$guru_id_login . "
         ORDER BY k.nama ASC
     ");
     while ($q_guru_kelas && $k = mysqli_fetch_assoc($q_guru_kelas)) {
@@ -314,7 +314,7 @@ if ($role === 'Admin' || ($role === 'Guru' && $is_wali_kelas)) {
                 </div>
             </div>
             <?php endif; ?>
- 
+
             <!-- Kelas dari Catatan Pelanggaran (Guru Biasa) -->
             <?php if ($role === 'Guru' && !$is_wali_kelas && !empty($guru_kelas)): ?>
             <div class="bg-green-50 border border-green-200 p-6 rounded-[1.5rem] mb-8">
@@ -334,7 +334,7 @@ if ($role === 'Admin' || ($role === 'Guru' && $is_wali_kelas)) {
                 </div>
             </div>
             <?php endif; ?>
- 
+
             <!-- Table -->
             <div class="bg-slate-100 p-6 rounded-[1.5rem]">
                 <div class="overflow-x-auto">
@@ -378,3 +378,4 @@ if ($role === 'Admin' || ($role === 'Guru' && $is_wali_kelas)) {
     </div>
 </body>
 </html>
+

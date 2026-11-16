@@ -117,3 +117,4 @@ $result = @mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran $where ORDER BY 
     </script>
 </body>
 </html>
+

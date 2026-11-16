@@ -13,7 +13,7 @@ $active = fn($file) => $current_page === $file ? 'text-blue-600 bg-blue-50 round
         <a href="dashboard.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('dashboard.php'); ?>">
             <i class="fa-solid fa-border-all text-lg w-5 text-center"></i> Dashboard
         </a>
- 
+
         <!-- Menu Khusus ADMIN -->
         <?php if ($role === 'Admin'): ?>
             <div class="pt-4 pb-1">
@@ -37,7 +37,7 @@ $active = fn($file) => $current_page === $file ? 'text-blue-600 bg-blue-50 round
             <a href="kelola_tahun_ajaran.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('kelola_tahun_ajaran.php'); ?>">
                 <i class="fa-solid fa-calendar text-lg w-5 text-center"></i> Tahun Ajaran
             </a>
- 
+
             <div class="pt-4 pb-1">
                 <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Plotting / Penempatan</p>
             </div>
@@ -47,7 +47,7 @@ $active = fn($file) => $current_page === $file ? 'text-blue-600 bg-blue-50 round
             <a href="walikelas.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('walikelas.php'); ?>">
                 <i class="fa-solid fa-user-tie text-lg w-5 text-center"></i> Kelola Wali Kelas
             </a>
- 
+
             <div class="pt-4 pb-1">
                 <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Data Pelanggaran</p>
             </div>
@@ -61,12 +61,12 @@ $active = fn($file) => $current_page === $file ? 'text-blue-600 bg-blue-50 round
                 <i class="fa-solid fa-file-export text-lg w-5 text-center"></i> Cetak / Export
             </a>
         <?php endif; ?>
- 
+
         <!-- Menu Aktivitas -->
         <div class="pt-4 pb-1">
             <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Aktivitas</p>
         </div>
- 
+
         <?php if (strtolower($role) !== 'admin'): ?>
         <a href="catatan_pelanggaran.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('catatan_pelanggaran.php'); ?>">
             <i class="fa-solid fa-clipboard-user text-lg w-5 text-center"></i> Catat Pelanggaran
@@ -81,13 +81,13 @@ $active = fn($file) => $current_page === $file ? 'text-blue-600 bg-blue-50 round
             <i class="fa-solid fa-file-contract text-lg w-5 text-center"></i> Laporan
         </a>
         <?php endif; ?>
- 
+
         <?php if ($role === 'Admin'): ?>
         <a href="riwayat.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('riwayat.php'); ?>">
             <i class="fa-solid fa-clock-rotate-left text-lg w-5 text-center"></i> Riwayat
         </a>
         <?php endif; ?>
- 
+
         <?php if ($role === 'Guru' && $is_wali_kelas): ?>
         <a href="riwayat.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-slate-700 hover:text-blue-600 transition <?php echo $active('riwayat.php'); ?>">
             <i class="fa-solid fa-clock-rotate-left text-lg w-5 text-center"></i> Riwayat
@@ -99,7 +99,7 @@ $active = fn($file) => $current_page === $file ? 'text-blue-600 bg-blue-50 round
             <i class="fa-solid fa-envelope-open-text text-lg w-5 text-center"></i> Cetak Surat
         </a>
         <?php endif; ?>
- 
+
         <?php if ($role === 'Admin'): ?>
         <!-- Menu About Me (khusus Admin) -->
         <div class="pt-4 pb-1">
@@ -109,7 +109,7 @@ $active = fn($file) => $current_page === $file ? 'text-blue-600 bg-blue-50 round
             <i class="fa-solid fa-user text-lg w-5 text-center"></i> About Me
         </a>
         <?php endif; ?>
- 
+
     </nav>
     <div class="p-4 mb-4 border-t border-slate-200">
         <a href="logout.php" class="flex items-center gap-4 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 rounded-lg transition">

@@ -196,16 +196,24 @@ if (isset($_GET['mode']) && in_array($_GET['mode'], ['admin', 'walikelas'], true
                 width: auto !important;
                 height: auto !important;
                 min-height: auto !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             .surat-container {
+                /* Margin cetak sudah ditangani @page, jadi container tidak perlu
+                   padding/lebar 210mm lagi agar tidak dobel margin & meluber. */
                 width: 100% !important;
+                max-width: none !important;
                 min-height: auto !important;
-                padding: 10mm 15mm !important;
+                padding: 0 !important;
                 margin: 0 !important;
                 border: none !important;
                 box-shadow: none !important;
                 border-radius: 0 !important;
+                overflow: visible !important;
             }
+            table { page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
         }
     </style>
 </head>
@@ -300,16 +308,16 @@ if (isset($_GET['mode']) && in_array($_GET['mode'], ['admin', 'walikelas'], true
         <?php endif; ?>
 
         <!-- Tanda Tangan -->
-        <div class="no-split" style="margin-top: 35px; width: 100%;">
+        <div class="no-split" style="margin-top: 24px; width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                
+
                 <!-- Tanda Tangan Sisi Kiri: Guru yang Menindak -->
                 <div style="width: 260px; text-align: center;">
                     <p style="margin: 0; font-size: 13px;">Mengetahui,</p>
                     <p style="margin: 2px 0 0 0; font-weight: bold; font-size: 14px;">Guru yang Menindak</p>
-                    
+
                     <!-- Paraf / Visual Tanda Tangan -->
-                    <div style="height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 4px 0;">
+                    <div style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 4px 0;">
                         <svg width="140" height="50" viewBox="0 0 140 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
                             <path d="M12 36C26 32 42 16 54 20C64 24 56 44 72 32C86 22 102 12 114 24C120 32 126 40 134 32" stroke="#1d4ed8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M36 28C48 28 84 24 118 30" stroke="#1d4ed8" stroke-width="1.8" stroke-linecap="round"/>
@@ -330,12 +338,12 @@ if (isset($_GET['mode']) && in_array($_GET['mode'], ['admin', 'walikelas'], true
                 <!-- Tanda Tangan Sisi Kanan: Admin atau Wali Kelas (Sesuai Role / Mode) -->
                 <div style="width: 260px; text-align: center;">
                     <p style="margin: 0; font-size: 13px;">Tasikmalaya, <?php echo date('d F Y', strtotime($surat['tanggal_surat'])); ?></p>
-                    
+
                     <?php if ($mode_ttd === 'admin'): ?>
                         <p style="margin: 2px 0 0 0; font-weight: bold; font-size: 14px;">Administrator Sekolah</p>
-                        
+
                         <!-- Paraf / Visual Tanda Tangan Admin -->
-                        <div style="height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 4px 0;">
+                        <div style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 4px 0;">
                             <svg width="140" height="50" viewBox="0 0 140 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
                                 <path d="M18 40C30 18 42 12 55 22C65 30 58 46 78 34C94 24 110 16 120 26C126 34 132 40 138 34" stroke="#1e40af" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                                 <path d="M28 32C48 30 80 28 114 34" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/>
@@ -352,9 +360,9 @@ if (isset($_GET['mode']) && in_array($_GET['mode'], ['admin', 'walikelas'], true
 
                     <?php else: ?>
                         <p style="margin: 2px 0 0 0; font-weight: bold; font-size: 14px;">Wali Kelas <?php echo htmlspecialchars($surat['nama_kelas']); ?></p>
-                        
+
                         <!-- Paraf / Visual Tanda Tangan Wali Kelas -->
-                        <div style="height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 4px 0;">
+                        <div style="height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 4px 0;">
                             <svg width="140" height="50" viewBox="0 0 140 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
                                 <path d="M15 38C28 22 45 14 58 24C68 32 60 48 80 36C95 26 112 18 122 28C128 36 134 42 140 36" stroke="#047857" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                                 <path d="M32 30C52 28 85 26 120 32" stroke="#047857" stroke-width="1.8" stroke-linecap="round"/>
@@ -378,5 +386,62 @@ if (isset($_GET['mode']) && in_array($_GET['mode'], ['admin', 'walikelas'], true
 
     </div>
 
+    <script>
+        (function () {
+            // Pastikan seluruh isi surat + tanda tangan muat dalam 1 halaman A4.
+            // Tailwind memakai satuan rem, sehingga menyesuaikan font-size root
+            // ikut mengecilkan teks dan jarak secara proporsional.
+            function tinggiIsiSurat(container) {
+                const anak = container.children;
+                if (!anak.length) return 0;
+                const atas = anak[0].getBoundingClientRect().top;
+                const bawah = anak[anak.length - 1].getBoundingClientRect().bottom;
+                return bawah - atas;
+            }
+
+            function muatSatuHalaman() {
+                const container = document.querySelector('.surat-container');
+                if (!container) return;
+                const root = document.documentElement;
+                const asli = root.style.fontSize;
+
+                // Area cetak A4 = 297mm - (margin atas 15mm + bawah 15mm) = 267mm.
+                // Dikurangi toleransi agar aman dari pembulatan browser/printer.
+                const MM = 96 / 25.4;
+                const tersedia = 262 * MM;
+
+                let ukuran = 16;
+                root.style.fontSize = ukuran + 'px';
+                let tinggi = tinggiIsiSurat(container);
+
+                while (tinggi > tersedia && ukuran > 9) {
+                    ukuran -= 0.5;
+                    root.style.fontSize = ukuran + 'px';
+                    tinggi = tinggiIsiSurat(container);
+                }
+
+                root.style.fontSize = asli;
+
+                let style = document.getElementById('styleMuatA4');
+                if (!style) {
+                    style = document.createElement('style');
+                    style.id = 'styleMuatA4';
+                    document.head.appendChild(style);
+                }
+                style.textContent = ukuran < 16
+                    ? '@media print { html { font-size: ' + ukuran + 'px !important; } }'
+                    : '';
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', muatSatuHalaman);
+            } else {
+                muatSatuHalaman();
+            }
+            window.addEventListener('beforeprint', muatSatuHalaman);
+        })();
+    </script>
+
 </body>
 </html>
+

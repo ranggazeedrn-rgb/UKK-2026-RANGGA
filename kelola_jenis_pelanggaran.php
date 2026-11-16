@@ -162,3 +162,4 @@ $kategori_res = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHE
     </script>
 </body>
 </html>
+

@@ -211,7 +211,8 @@ if ($result_riwayat) {
                                             data-kelas-nama="<?php echo htmlspecialchars($kelas); ?>"
                                             data-label="<?php echo htmlspecialchars($label); ?>"
                                             data-cari="<?php echo htmlspecialchars(strtolower($nis . ' ' . $nama . ' ' . $kelas)); ?>"
-                                            onclick="pilihItemSiswa(this)">
+                                            onclick="pilihItemSiswa(this)"
+                                            onkeydown="navigasiSiswa(event)">
                                         <span class="block font-bold text-slate-700"><?php echo htmlspecialchars($nama); ?></span>
                                         <span class="block text-[11px] font-bold text-slate-400"><?php echo htmlspecialchars($nis); ?><?php echo $kelas !== '' ? ' &bull; ' . htmlspecialchars($kelas) : ''; ?></span>
                                     </button>
@@ -230,14 +231,57 @@ if ($result_riwayat) {
 
                 <div class="mb-5">
                     <label class="block text-xs font-bold text-slate-700 mb-2">Jenis Pelanggaran *</label>
-                    <select name="pelanggaran_id" required class="w-full border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
-                        <option value="">-- Pilih Pelanggaran --</option>
-                        <?php if ($pelanggaran_list): while ($p = mysqli_fetch_assoc($pelanggaran_list)): ?>
-                            <option value="<?php echo $p['id']; ?>" data-poin="<?php echo (int)$p['poin']; ?>" data-kategori="<?php echo htmlspecialchars($p['pelanggaran_kategori_id'] ?? ''); ?>">
-                                [<?php echo htmlspecialchars($p['kode']); ?>] <?php echo htmlspecialchars($p['nama']); ?> (<?php echo (int)$p['poin']; ?> Poin)
-                            </option>
-                        <?php endwhile; endif; ?>
-                    </select>
+                    <div class="relative">
+                        <div class="flex gap-2">
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                                <input type="text" id="cariPelanggaran" autocomplete="off"
+                                       placeholder="Ketik kode atau nama pelanggaran..."
+                                       onclick="bukaPanelPelanggaran()"
+                                       oninput="ketikPelanggaran()"
+                                       onkeydown="navigasiPelanggaran(event)"
+                                       aria-controls="panelPelanggaran" aria-expanded="false"
+                                       class="w-full border border-slate-300 pl-10 pr-10 py-2.5 rounded-xl text-sm focus:border-blue-600 focus:outline-none bg-slate-50">
+                                <button type="button" onclick="bersihkanPilihanPelanggaran()" title="Bersihkan pilihan pelanggaran"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            <button type="button" id="tombolPelanggaran" onclick="togglePanelPelanggaran()"
+                                    aria-controls="panelPelanggaran" aria-expanded="false" aria-label="Buka daftar pelanggaran"
+                                    class="w-12 shrink-0 rounded-xl border border-slate-300 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-blue-600 flex items-center justify-center transition">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                        </div>
+
+                        <div id="panelPelanggaran" class="hidden absolute left-0 right-0 z-20 mt-2 max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg">
+                            <?php if ($pelanggaran_list && mysqli_num_rows($pelanggaran_list) > 0): ?>
+                                <?php while ($p = mysqli_fetch_assoc($pelanggaran_list)):
+                                    $kode_p = $p['kode'] ?? '-';
+                                    $nama_p = $p['nama'] ?? 'Pelanggaran';
+                                    $poin_p = (int)($p['poin'] ?? 0);
+                                    $label_p = '[' . $kode_p . '] ' . $nama_p . ' (' . $poin_p . ' Poin)';
+                                ?>
+                                    <button type="button"
+                                            class="item-pelanggaran w-full text-left px-4 py-2.5 text-sm border-b border-slate-100 last:border-0 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none"
+                                            data-id="<?php echo (int)$p['id']; ?>"
+                                            data-poin="<?php echo $poin_p; ?>"
+                                            data-kategori="<?php echo htmlspecialchars($p['pelanggaran_kategori_id'] ?? ''); ?>"
+                                            data-label="<?php echo htmlspecialchars($label_p); ?>"
+                                            data-cari="<?php echo htmlspecialchars(strtolower($kode_p . ' ' . $nama_p)); ?>"
+                                            onclick="pilihItemPelanggaran(this)"
+                                            onkeydown="navigasiPelanggaran(event)">
+                                        <span class="block font-bold text-slate-700">[<?php echo htmlspecialchars($kode_p); ?>] <?php echo htmlspecialchars($nama_p); ?></span>
+                                        <span class="block text-[11px] font-bold text-slate-400"><?php echo $poin_p; ?> Poin</span>
+                                    </button>
+                                <?php endwhile; ?>
+                            <?php endif; ?>
+                            <p id="panelPelanggaranKosong" class="hidden px-4 py-3 text-[11px] font-bold text-slate-400">Pelanggaran tidak ditemukan.</p>
+                        </div>
+                    </div>
+                    <input type="hidden" name="pelanggaran_id" id="pelanggaranId" value="">
+                    <p id="infoPoinPelanggaran" class="hidden text-[11px] font-bold text-blue-600 mt-1.5"></p>
+                    <p id="infoPelanggaranKosong" class="hidden text-[11px] font-bold text-red-500 mt-1.5">Pilih jenis pelanggaran dari daftar terlebih dahulu.</p>
                 </div>
 
                 <div class="mb-5">
@@ -308,6 +352,16 @@ if ($result_riwayat) {
             document.getElementById('infoKelasSiswa').textContent = 'Kelas: ' + (btn.dataset.kelasNama || '-');
             document.getElementById('infoKelasSiswa').classList.remove('hidden');
             document.getElementById('infoKosong').classList.add('hidden');
+
+            // Kelas siswa otomatis terdeteksi & tersinkron ke filter/kolom kelas
+            const kelasId = btn.dataset.kelasId || '';
+            if (kelasId && kelasId !== '0') {
+                const selKelas = document.getElementById('selectKelas');
+                if (selKelas) {
+                    const opsiAda = Array.from(selKelas.options).some(o => o.value === kelasId);
+                    if (opsiAda) selKelas.value = kelasId;
+                }
+            }
             tutupPanelSiswa();
         }
         function bersihkanPilihanSiswa() {
@@ -317,6 +371,11 @@ if ($result_riwayat) {
             document.getElementById('infoKosong').classList.remove('hidden');
         }
         function ketikSiswa() {
+            // Mengetik ulang berarti memilih ulang siswa
+            document.getElementById('siswaId').value = '';
+            document.getElementById('infoKelasSiswa').classList.add('hidden');
+            bukaPanelSiswa();
+
             const input = document.getElementById('cariSiswa').value.toLowerCase();
             const items = document.querySelectorAll('.item-siswa');
             const emptyMsg = document.getElementById('panelKosong');
@@ -329,20 +388,98 @@ if ($result_riwayat) {
         }
         function navigasiSiswa(e) {
             const items = Array.from(document.querySelectorAll('.item-siswa:not(.hidden)'));
+            if (e.key === 'Escape') { e.preventDefault(); tutupPanelSiswa(); return; }
+
+            // Enter langsung memilih siswa yang sedang disorot,
+            // atau hasil pencarian pertama bila kursor masih di kolom input.
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const aktif = document.activeElement;
+                if (aktif && aktif.classList.contains('item-siswa') && !aktif.classList.contains('hidden')) {
+                    pilihItemSiswa(aktif);
+                } else if (items.length > 0) {
+                    pilihItemSiswa(items[0]);
+                }
+                return;
+            }
+
+            if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+            e.preventDefault();
+            bukaPanelSiswa();
             if (!items.length) return;
             const idx = items.findIndex(i => i === document.activeElement);
-            if (e.key === 'ArrowDown') { e.preventDefault(); items[(idx + 1) % items.length].focus(); }
-            if (e.key === 'ArrowUp') { e.preventDefault(); items[(idx - 1 + items.length) % items.length].focus(); }
-            if (e.key === 'Enter') { e.preventDefault(); pilihItemSiswa(document.activeElement); }
-            if (e.key === 'Escape') { tutupPanelSiswa(); }
+            if (e.key === 'ArrowDown') items[(idx + 1) % items.length].focus();
+            else items[(idx - 1 + items.length) % items.length].focus();
         }
+
+        // ===== Pilihan Jenis Pelanggaran (mirip kolom Pilih Siswa) =====
+        function bukaPanelPelanggaran() { document.getElementById('panelPelanggaran').classList.remove('hidden'); }
+        function tutupPanelPelanggaran() { document.getElementById('panelPelanggaran').classList.add('hidden'); }
+        function togglePanelPelanggaran() { document.getElementById('panelPelanggaran').classList.toggle('hidden'); }
+        function pilihItemPelanggaran(btn) {
+            document.getElementById('pelanggaranId').value = btn.dataset.id;
+            document.getElementById('cariPelanggaran').value = btn.dataset.label;
+            const info = document.getElementById('infoPoinPelanggaran');
+            info.textContent = 'Poin: ' + (btn.dataset.poin || '0') + ' poin';
+            info.classList.remove('hidden');
+            document.getElementById('infoPelanggaranKosong').classList.add('hidden');
+            tutupPanelPelanggaran();
+        }
+        function bersihkanPilihanPelanggaran() {
+            document.getElementById('pelanggaranId').value = '';
+            document.getElementById('cariPelanggaran').value = '';
+            document.getElementById('infoPoinPelanggaran').classList.add('hidden');
+            document.getElementById('infoPelanggaranKosong').classList.remove('hidden');
+        }
+        function ketikPelanggaran() {
+            document.getElementById('pelanggaranId').value = '';
+            document.getElementById('infoPoinPelanggaran').classList.add('hidden');
+            bukaPanelPelanggaran();
+
+            const input = document.getElementById('cariPelanggaran').value.toLowerCase();
+            const items = document.querySelectorAll('.item-pelanggaran');
+            const emptyMsg = document.getElementById('panelPelanggaranKosong');
+            let visible = 0;
+            items.forEach(item => {
+                if (item.dataset.cari.includes(input)) { item.classList.remove('hidden'); visible++; }
+                else { item.classList.add('hidden'); }
+            });
+            emptyMsg.classList.toggle('hidden', visible > 0);
+        }
+        function navigasiPelanggaran(e) {
+            const items = Array.from(document.querySelectorAll('.item-pelanggaran:not(.hidden)'));
+            if (e.key === 'Escape') { e.preventDefault(); tutupPanelPelanggaran(); return; }
+
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const aktif = document.activeElement;
+                if (aktif && aktif.classList.contains('item-pelanggaran') && !aktif.classList.contains('hidden')) {
+                    pilihItemPelanggaran(aktif);
+                } else if (items.length > 0) {
+                    pilihItemPelanggaran(items[0]);
+                }
+                return;
+            }
+
+            if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+            e.preventDefault();
+            bukaPanelPelanggaran();
+            if (!items.length) return;
+            const idx = items.findIndex(i => i === document.activeElement);
+            if (e.key === 'ArrowDown') items[(idx + 1) % items.length].focus();
+            else items[(idx - 1 + items.length) % items.length].focus();
+        }
+
         function cekSiswaDipilih() {
             const id = document.getElementById('siswaId').value;
             if (!id) { alert('Pilih siswa terlebih dahulu!'); return false; }
+            const pid = document.getElementById('pelanggaranId').value;
+            if (!pid) { alert('Pilih jenis pelanggaran terlebih dahulu!'); return false; }
             return true;
         }
         document.addEventListener('click', e => {
-            if (!e.target.closest('.relative') && !e.target.closest('#panelSiswa')) tutupPanelSiswa();
+            if (!e.target.closest('#panelSiswa') && !e.target.closest('#cariSiswa') && !e.target.closest('#tombolSiswa')) tutupPanelSiswa();
+            if (!e.target.closest('#panelPelanggaran') && !e.target.closest('#cariPelanggaran') && !e.target.closest('#tombolPelanggaran')) tutupPanelPelanggaran();
         });
 
         $(document).ready(function() {
