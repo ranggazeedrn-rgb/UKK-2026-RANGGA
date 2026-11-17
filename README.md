@@ -1,114 +1,193 @@
 # Sistem Informasi Kedisiplinan Siswa — UKK 2026
 
-Aplikasi web untuk mencatat, memantau, dan merekap pelanggaran siswa secara terpusat. Dibuat untuk UKK RPL 2026 oleh **Rangga Ramadiyanto Nurhakim** (SMK Muhammadiyah Tasikmalaya).
+Aplikasi web untuk mencatat, memantau, dan merekap pelanggaran siswa secara terpusat. Project ini dibuat untuk kebutuhan UKK RPL 2026 oleh **Rangga Ramadiyanto Nurhakim** dari **SMK Muhammadiyah Tasikmalaya**.
 
-## Fitur
+## Deskripsi
 
-**Admin**
-- CRUD siswa, guru, kelas, tahun ajaran, user, jenis & kategori pelanggaran
-- Penempatan siswa per kelas per tahun ajaran
+Sistem ini membantu sekolah dalam mengelola data kedisiplinan siswa dengan alur yang sederhana namun lengkap, mulai dari input data siswa, guru, kelas, tahun ajaran, hingga proses pencatatan pelanggaran dan pembuatan surat peringatan.
+
+Dengan sistem ini, pihak sekolah dapat:
+- mengelola data master secara terstruktur,
+- memantau poin pelanggaran siswa secara real-time,
+- menilai tingkat kedisiplinan berdasarkan rekapan poin,
+- membuat surat peringatan atau panggilan orang tua dengan cepat,
+- menampilkan dashboard yang memudahkan monitoring.
+
+## Fitur Utama
+
+### Admin
+- CRUD siswa, guru, kelas, tahun ajaran, user, jenis pelanggaran, dan kategori pelanggaran
+- Penempatan siswa ke kelas per tahun ajaran
 - Penetapan wali kelas
-- Lihat seluruh laporan, riwayat, rekap poin, dan arsip surat
-- Cetak/export laporan (PDF via print browser, Excel `.xls`)
+- Melihat seluruh laporan, riwayat, rekap poin, dan arsip surat
+- Cetak/export laporan dalam format PDF dan Excel `.xls`
 
-**Guru**
-- Catat pelanggaran siswa
-- Isi tindakan atas pelanggaran yang ia catat sendiri
-- Rekap poin & riwayat pelanggaran
+### Guru
+- Mencatat pelanggaran siswa
+- Mengisi tindakan atas pelanggaran yang dibuat sendiri
+- Melihat rekap poin dan riwayat pelanggaran
 
-**Wali Kelas (guru yang ditunjuk di menu Wali Kelas)**
-- Semua hak Guru, ditambah laporan siswa di kelasnya, riwayat, dan cetak surat peringatan / panggilan orang tua
+### Wali Kelas
+- Memiliki akses seperti Guru, ditambah:
+- melihat laporan siswa di kelasnya,
+- memantau riwayat pelanggaran,
+- mencetak surat peringatan atau panggilan orang tua
 
-**Umum**
-- Login berbasis role, proteksi halaman terpusat di `cek_akses.php`
-- Dashboard statistik + daftar siswa dengan poin ≥ 20 (peringatan) dan ≥ 50 (panggilan orang tua)
-- Surat peringatan/panggilan siap cetak
-- Halaman profil developer
+### Umum
+- Sistem login berbasis role
+- Proteksi akses halaman terpusat melalui `cek_akses.php`
+- Dashboard statistik dan daftar siswa dengan poin ≥ 20 serta ≥ 50
+- Surat peringatan dan panggilan siap dicetak
+- Halaman profil pengembang
 
-## Teknologi
+## Teknologi yang Digunakan
 
-- PHP native (prosedural, `mysqli`) — tanpa framework dan tanpa Composer
+- PHP native (prosedural, `mysqli`)
 - MySQL / MariaDB
-- Tailwind CSS + Font Awesome via CDN
+- Tailwind CSS
+- Font Awesome via CDN
 - Diagram database: `draw io/UKK_DB.drawio`
 
-## Kebutuhan
+## Persyaratan Sistem
 
-- PHP **7.4+** (kode memakai arrow function)
-- MySQL / MariaDB (XAMPP/Laragon sudah cukup)
+- PHP 7.4+
+- MySQL / MariaDB
 - Web server Apache
+- XAMPP / Laragon (direkomendasikan untuk pengembangan lokal)
 
 ## Instalasi
 
-1.   Clone Github Cli
-   ```bash
-   git clone https://github.com/ranggazeedrn-rgb/UKK-2026-RANGGA.git
-   ```
-   Clone Github Desktop
-   ```bash
-   https://github.com/ranggazeedrn-rgb/UKK-2026-RANGGA.git
-   ```
-   Untuk XAMPP letakkan di `C:\xampp\htdocs\UKK-2026-RANGGA`.
+### 1) Clone repository
 
-2. Jalankan **Apache** dan **MySQL** dari XAMPP Control Panel.
+```bash
+git clone https://github.com/ranggazeedrn-rgb/UKK-2026-RANGGA.git
+```
 
-3. Import database `database/if0_43368906_db_ukk_rangga.sql` lewat phpMyAdmin.
-   Nama database di dump adalah `if0_43368906_db_ukk_rangga`, sedangkan aplikasi memakai **`db_ukk_2026`** (`config/koneksi.php`). Pilih salah satu:
-   - Rename database menjadi `db_ukk_2026` setelah import, atau
-   - Ubah `$db` di `config/koneksi.php` sesuai nama database hasil import.
+Atau unduh melalui GitHub Desktop.
 
-4. Sesuaikan kredensial database di `config/koneksi.php` bila perlu:
-   ```php
-   $host = "localhost";
-   $user = "root";
-   $pass = "";
-   $db   = "db_ukk_2026";
-   ```
+### 2) Letakkan project di folder web server
 
-5. Buka `http://localhost/UKK-2026-RANGGA/`.
+Untuk XAMPP:
 
-## Akun Demo (dari data seed)
+```bash
+C:\xampp\htdocs\UKK-2026-RANGGA
+```
+
+### 3) Jalankan Apache dan MySQL
+
+Aktifkan Apache dan MySQL pada XAMPP Control Panel.
+
+### 4) Import database
+
+Import file SQL berikut:
+
+```bash
+database/if0_43368906_db_ukk_rangga.sql
+```
+
+Catatan penting:
+- Nama database asli pada dump adalah `if0_43368906_db_ukk_rangga`
+- Aplikasi ini pada konfigurasi default memakai database `db_ukk_2026`
+
+Pilih salah satu cara berikut:
+- rename database hasil import menjadi `db_ukk_2026`, atau
+- ubah nilai `$db` di `config/koneksi.php` sesuai nama database yang Anda gunakan
+
+### 5) Konfigurasi koneksi database
+
+Buka file `config/koneksi.php` lalu sesuaikan konfigurasi berikut:
+
+```php
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db   = "db_ukk_2026";
+```
+
+### 6) Akses aplikasi
+
+Buka browser dan masuk ke:
+
+```bash
+http://localhost/UKK-2026-RANGGA/
+```
+
+## Akun Demo
+
+Akun demo berikut tersedia dari data seed:
 
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | `admin@ukk2026.com` | `admin123` |
 | Guru | `guru@ukk2026.com` | `guru123` |
 
-Akun guru seed lainnya (`*@sekolah.sch.id`) memakai password `guru123`. Segera ganti password setelah aplikasi dipakai.
+Catatan:
+- Akun guru lain dengan domain `*@sekolah.sch.id` juga menggunakan password `guru123`
+- Segera ganti password setelah aplikasi dipakai di lingkungan nyata
 
 ## Struktur Folder
 
-```
+```text
 UKK-2026-RANGGA/
-├── config/koneksi.php        # Koneksi database
-├── layouts/head.php          # Meta, Tailwind, Font Awesome, helper UI
-├── layouts/sidebar.php       # Menu sidebar per role
-├── database/                 # Dump SQL database
-├── draw io/                  # ERD database
-├── cek_akses.php             # Guard login, role, scope data, helper bersama
-├── login.php / logout.php
+├── config/
+│   └── koneksi.php          # konfigurasi database
+├── layouts/
+│   ├── head.php             # meta tag, Tailwind, Font Awesome, helper UI
+│   └── sidebar.php          # menu sidebar per role
+├── database/
+│   └── *.sql                # dump database
+├── draw io/
+│   └── UKK_DB.drawio        # diagram ERD database
+├── cek_akses.php            # guard login, role, dan akses data
+├── login.php
+├── logout.php
 ├── dashboard.php
-├── kelola_*.php / tambah_*.php / edit_*.php   # CRUD data master
-├── catatan_pelanggaran.php   # Input pelanggaran
-├── tindakan.php / edit_tindakan.php
-├── rekap_point.php / riwayat.php / laporan.php
-├── kelola_surat.php / tambah_surat.php / cetak_surat.php
+├── kelola_*.php
+├── tambah_*.php
+├── edit_*.php
+├── catatan_pelanggaran.php
+├── tindakan.php
+├── edit_tindakan.php
+├── rekap_point.php
+├── riwayat.php
+├── laporan.php
+├── kelola_surat.php
+├── tambah_surat.php
+├── cetak_surat.php
 ├── cetak_export.php
-├── walikelas.php / penempatan_siswa.php
-└── aboutme.php
+├── walikelas.php
+├── penempatan_siswa.php
+├── aboutme.php
+└── README.md
 ```
 
-## Alur Singkat
+## Alur Sistem
 
-1. Admin menyiapkan data master: tahun ajaran (aktifkan satu), kelas, guru, user, jenis & kategori pelanggaran.
-2. Admin menempatkan siswa ke kelas pada tahun ajaran berjalan dan menetapkan wali kelas.
-3. Guru mencatat pelanggaran; poin otomatis diakumulasi.
-4. Guru yang mencatat (atau Admin) mengisi tindakan.
-5. Siswa dengan poin ≥ 20 muncul di dashboard; Admin/Wali Kelas membuat dan mencetak surat.
-6. Laporan dapat difilter per tahun ajaran/kelas lalu dicetak atau diexport.
+1. Admin menyiapkan data master seperti tahun ajaran, kelas, guru, user, serta jenis dan kategori pelanggaran.
+2. Admin menempatkan siswa ke kelas pada tahun ajaran aktif dan menetapkan wali kelas.
+3. Guru mencatat pelanggaran siswa dan sistem akan melakukan akumulasi poin otomatis.
+4. Guru yang mencatat pelanggaran, atau Admin, dapat mengisi tindakan atas pelanggaran tersebut.
+5. Siswa dengan poin ≥ 20 akan muncul di dashboard sebagai peringatan; siswa dengan poin ≥ 50 akan masuk kategori panggilan orang tua.
+6. Admin atau Wali Kelas dapat membuat dan mencetak surat peringatan/panggilan orang tua.
+7. Laporan dapat difilter berdasarkan tahun ajaran dan kelas lalu dicetak atau di-export.
 
-## Catatan
+## Catatan Penting
 
-- Tidak ada proses build: semua aset UI dari CDN, cukup buka lewat Apache.
-- Login menerima password hash (`password_hash`) atau plaintext lama; data seed memakai hash bcrypt.
-- `config/koneksi.php` berisi kredensial default XAMPP (`root`, tanpa password) — jangan dipakai apa adanya di server publik.
+- Aplikasi tidak membutuhkan proses build. Semua asset UI diambil dari CDN.
+- Login mendukung password yang sudah di-hash (`password_hash`) maupun password plain text versi lama.
+- File `config/koneksi.php` berisi kredensial default XAMPP (`root`, tanpa password). Jangan digunakan begitu saja untuk server publik.
+- Project ini dibuat untuk keperluan pembelajaran dan ujian praktik, sehingga perlu disesuaikan terlebih dahulu sebelum digunakan di lingkungan produksi.
+
+## Lisensi
+
+Project ini dibuat untuk kebutuhan pembelajaran UKK RPL 2026. Gunakan dengan bijak dan sesuaikan kebutuhan sekolah/instansi Anda.
+
+## Kontak
+
+Dibuat oleh: **Rangga Ramadiyanto Nurhakim**
+
+GitHub: https://github.com/ranggazeedrn-rgb
+
+---
+
+Semoga README ini lebih rapi, informatif, dan siap digunakan untuk proyek maupun portofolio.
