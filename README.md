@@ -42,7 +42,13 @@ Aplikasi web untuk mencatat, memantau, dan merekap pelanggaran siswa secara terp
 
 1. Clone repo ke folder web server:
    ```bash
+   CLONE GITHUB CLI
    git clone https://github.com/ranggazeedrn-rgb/UKK-2026-RANGGA.git
+   ```
+   1. Clone repo ke folder web server:
+   ```bash
+   CLONE GITHUB DESKTOP
+   https://github.com/ranggazeedrn-rgb/UKK-2026-RANGGA.git
    ```
    Untuk XAMPP letakkan di `C:\xampp\htdocs\UKK-2026-RANGGA`.
 
