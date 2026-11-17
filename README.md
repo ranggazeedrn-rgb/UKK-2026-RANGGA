@@ -60,10 +60,14 @@ Dengan sistem ini, pihak sekolah dapat:
 ### 1) Clone repository
 
 ```bash
-git clone https://github.com/ranggazeedrn-rgb/UKK-2026-RANGGA.git
+gh repo clone ranggazeedrn-rgb/UKK-2026-RANGGA
 ```
 
-Atau unduh melalui GitHub Desktop.
+Atau Clone Melalui Github Desktop
+
+```bash
+https://github.com/ranggazeedrn-rgb/UKK-2026-RANGGA.git
+```
 
 ### 2) Letakkan project di folder web server
 
