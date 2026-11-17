@@ -57,7 +57,7 @@ Dengan sistem ini, pihak sekolah dapat:
 
 ## Instalasi
 
-### 1) Clone repository
+### 1) Clone repository Melalui Github Cli
 
 ```bash
 gh repo clone ranggazeedrn-rgb/UKK-2026-RANGGA
